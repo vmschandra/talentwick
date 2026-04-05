@@ -19,7 +19,7 @@ import {
   DocumentSnapshot,
   QueryConstraint,
 } from "firebase/firestore";
-import { db } from "./config";
+import { db, firebaseConfigured } from "./config";
 import {
   Job,
   CandidateProfile,
@@ -71,6 +71,7 @@ export async function createJob(jobData: Omit<Job, "id" | "createdAt" | "updated
 }
 
 export async function getJob(jobId: string): Promise<Job | null> {
+  if (!firebaseConfigured) return null;
   const snap = await getDoc(doc(db, "jobs", jobId));
   return snap.exists() ? { id: snap.id, ...snap.data() } as Job : null;
 }
@@ -88,6 +89,8 @@ export async function searchJobs(
   lastDoc?: DocumentSnapshot,
   pageSize = JOBS_PER_PAGE
 ): Promise<{ jobs: Job[]; lastDoc: DocumentSnapshot | null }> {
+  if (!firebaseConfigured) return { jobs: [], lastDoc: null };
+
   const constraints: QueryConstraint[] = [
     where("status", "==", "active"),
     orderBy("createdAt", "desc"),
@@ -293,6 +296,7 @@ export async function createNotification(
 }
 
 export async function getUserNotifications(userId: string, limitCount = 20): Promise<Notification[]> {
+  if (!firebaseConfigured) return [];
   const q = query(
     collection(db, "notifications"),
     where("userId", "==", userId),
