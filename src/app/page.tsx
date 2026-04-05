@@ -1,101 +1,142 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { siteConfig } from "@/config/site";
+import { Briefcase, Users, CreditCard, Search, ArrowRight, CheckCircle2, Building, TrendingUp } from "lucide-react";
+
+const stats = [
+  { label: "Jobs Posted", value: "10,000+", icon: <Briefcase className="h-5 w-5" /> },
+  { label: "Companies", value: "2,500+", icon: <Building className="h-5 w-5" /> },
+  { label: "Candidates", value: "50,000+", icon: <Users className="h-5 w-5" /> },
+  { label: "Hires Made", value: "8,000+", icon: <TrendingUp className="h-5 w-5" /> },
+];
+
+const features = [
+  {
+    icon: <Search className="h-8 w-8" />,
+    title: "Smart Job Search",
+    desc: "Advanced filters by role, location, salary, and work mode to find your perfect match.",
+  },
+  {
+    icon: <CreditCard className="h-8 w-8" />,
+    title: "Pay-Per-Post Credits",
+    desc: "Flexible credit-based pricing. Buy only what you need, no subscriptions required.",
+  },
+  {
+    icon: <Users className="h-8 w-8" />,
+    title: "Applicant Tracking",
+    desc: "Manage candidates through a visual pipeline from application to offer.",
+  },
+];
+
+const steps = [
+  { num: "01", title: "Create an Account", desc: "Sign up as a job seeker or recruiter in seconds." },
+  { num: "02", title: "Complete Your Profile", desc: "Add skills, experience, and resume to stand out." },
+  { num: "03", title: "Apply or Post Jobs", desc: "Seekers apply for free. Recruiters post with credits." },
+  { num: "04", title: "Get Hired", desc: "Connect with great companies and land your dream job." },
+];
+
+export default function HomePage() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div>
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5">
+        <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
+          <div className="mx-auto max-w-3xl text-center">
+            <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
+              Find Your Next <span className="text-primary">Opportunity</span>
+            </h1>
+            <p className="mt-6 text-lg text-muted-foreground">
+              {siteConfig.description}
+            </p>
+            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <Link href="/browse-jobs">
+                <Button size="lg" className="gap-2">
+                  <Search className="h-4 w-4" /> Browse Jobs
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button size="lg" variant="outline" className="gap-2">
+                  Post a Job <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </section>
+
+      {/* Stats */}
+      <section className="border-y bg-muted/40">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+            {stats.map((s) => (
+              <div key={s.label} className="text-center">
+                <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  {s.icon}
+                </div>
+                <p className="text-2xl font-bold">{s.value}</p>
+                <p className="text-sm text-muted-foreground">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold">Everything You Need</h2>
+          <p className="mt-2 text-muted-foreground">Powerful tools for both job seekers and recruiters</p>
+        </div>
+        <div className="mt-12 grid gap-8 md:grid-cols-3">
+          {features.map((f) => (
+            <Card key={f.title} className="text-center">
+              <CardContent className="pt-8 pb-6">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  {f.icon}
+                </div>
+                <h3 className="text-lg font-semibold">{f.title}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{f.desc}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="bg-muted/40">
+        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+          <h2 className="text-center text-3xl font-bold">How It Works</h2>
+          <div className="mt-12 grid gap-8 md:grid-cols-4">
+            {steps.map((step) => (
+              <div key={step.num} className="text-center">
+                <span className="text-4xl font-bold text-primary/20">{step.num}</span>
+                <h3 className="mt-2 font-semibold">{step.title}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+        <div className="rounded-2xl bg-primary p-10 text-center text-primary-foreground md:p-16">
+          <h2 className="text-3xl font-bold">Ready to Get Started?</h2>
+          <p className="mt-4 text-primary-foreground/80">
+            Join thousands of professionals and companies already using {siteConfig.name}.
+          </p>
+          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Link href="/register">
+              <Button size="lg" variant="secondary" className="gap-2">
+                <CheckCircle2 className="h-4 w-4" /> Create Free Account
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
