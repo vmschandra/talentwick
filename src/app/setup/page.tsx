@@ -141,9 +141,9 @@ export default function SetupPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-12 sm:py-20">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight">HireFlow Setup</h1>
+        <h1 className="text-3xl font-bold tracking-tight">TalentWick Setup</h1>
         <p className="mt-2 text-muted-foreground">
-          Configure your environment to get HireFlow up and running.
+          Configure your environment to get TalentWick up and running.
         </p>
       </div>
 
@@ -289,7 +289,7 @@ export default function SetupPage() {
                   </h2>
                   <p className="mt-1 text-muted-foreground">
                     All required services are configured. You can start using
-                    HireFlow.
+                    TalentWick.
                   </p>
                 </div>
                 <Link href="/register">

@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mv temp-init/.gitignore .)",
+      "Bash(mv temp-init/* .)",
+      "Bash(mv temp-init/.eslintrc.json .)",
+      "Bash(cp -a temp-init/. .)",
+      "Bash(rm -rf temp-init)",
+      "Bash(npm install:*)",
+      "Bash(rm -rf \"\\(candidate\\)/candidate\")",
+      "Bash([ -d \"candidate/$dir\" ])",
+      "Bash(cp -R candidate/__TRACKED_VAR__ '\\(candidate\\)/__TRACKED_VAR__')",
+      "Bash(npx next:*)"
+    ]
+  }
+}

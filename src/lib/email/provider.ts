@@ -13,8 +13,8 @@ async function sendEmail(payload: EmailPayload): Promise<void> {
 export async function sendWelcomeEmail(email: string, name: string): Promise<void> {
   await sendEmail({
     to: email,
-    subject: "Welcome to HireFlow!",
-    html: `<h1>Welcome, ${name}!</h1><p>Your HireFlow account is ready. Complete your profile to get started.</p>`,
+    subject: "Welcome to TalentWick!",
+    html: `<h1>Welcome, ${name}!</h1><p>Your TalentWick account is ready. Complete your profile to get started.</p>`,
   });
 }
 

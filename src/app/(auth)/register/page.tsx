@@ -110,7 +110,7 @@ export default function RegisterPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Create Your Account</CardTitle>
           <CardDescription>
-            Join HireFlow and take the next step in your career
+            Join TalentWick and take the next step in your career
           </CardDescription>
         </CardHeader>
 

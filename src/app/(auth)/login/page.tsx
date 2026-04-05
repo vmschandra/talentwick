@@ -145,7 +145,7 @@ function LoginContent() {
             </div>
           )}
           <CardTitle className="text-2xl">{config ? config.title : "Welcome Back"}</CardTitle>
-          <CardDescription>{config ? config.description : "Sign in to your HireFlow account"}</CardDescription>
+          <CardDescription>{config ? config.description : "Sign in to your TalentWick account"}</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">

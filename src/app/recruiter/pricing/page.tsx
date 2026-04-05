@@ -186,7 +186,7 @@ export default function PricingPage() {
               <CardFooter>
                 {manual ? (
                   <Button variant="outline" className="w-full" asChild>
-                    <a href={`mailto:admin@hireflow.com?subject=Credit Purchase: ${plan.name}`}>
+                    <a href={`mailto:admin@talentwick.com?subject=Credit Purchase: ${plan.name}`}>
                       <Mail className="mr-2 h-4 w-4" /> Contact Admin
                     </a>
                   </Button>
