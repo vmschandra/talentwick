@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Loader2, Mail, Lock, Globe } from "lucide-react";
+import { Loader2, Mail, Lock, Globe, UserCircle, Building, ShieldCheck } from "lucide-react";
 
 import { loginWithEmail, loginWithGoogle, getUserDoc } from "@/lib/firebase/auth";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,36 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>}>
+      <LoginContent />
+    </Suspense>
+  );
+}
+
+const roleConfig = {
+  candidate: {
+    icon: <UserCircle className="h-6 w-6 text-primary" />,
+    title: "Candidate Login",
+    description: "Sign in to find and apply for jobs",
+  },
+  recruiter: {
+    icon: <Building className="h-6 w-6 text-primary" />,
+    title: "Recruiter Login",
+    description: "Sign in to post jobs and manage applicants",
+  },
+  admin: {
+    icon: <ShieldCheck className="h-6 w-6 text-primary" />,
+    title: "Admin Login",
+    description: "Sign in to the admin dashboard",
+  },
+};
+
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const role = searchParams.get("role") as keyof typeof roleConfig | null;
+  const config = role && roleConfig[role] ? roleConfig[role] : null;
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -110,8 +139,13 @@ export default function LoginPage() {
     <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Welcome Back</CardTitle>
-          <CardDescription>Sign in to your HireFlow account</CardDescription>
+          {config && (
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              {config.icon}
+            </div>
+          )}
+          <CardTitle className="text-2xl">{config ? config.title : "Welcome Back"}</CardTitle>
+          <CardDescription>{config ? config.description : "Sign in to your HireFlow account"}</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
@@ -202,13 +236,20 @@ export default function LoginPage() {
           </form>
         </CardContent>
 
-        <CardFooter className="justify-center">
-          <p className="text-sm text-muted-foreground">
-            Don&apos;t have an account?{" "}
-            <Link href="/register" className="font-medium text-primary hover:underline">
-              Create one
+        <CardFooter className="flex-col gap-3">
+          {role !== "admin" && (
+            <p className="text-sm text-muted-foreground">
+              Don&apos;t have an account?{" "}
+              <Link href="/register" className="font-medium text-primary hover:underline">
+                Create one
+              </Link>
+            </p>
+          )}
+          {role && (
+            <Link href="/" className="text-xs text-muted-foreground hover:text-foreground">
+              &larr; Back to home
             </Link>
-          </p>
+          )}
         </CardFooter>
       </Card>
     </div>
