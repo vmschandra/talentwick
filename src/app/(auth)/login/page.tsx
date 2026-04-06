@@ -62,6 +62,7 @@ function LoginContent() {
   const config = role && roleConfig[role] ? roleConfig[role] : null;
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const {
     register,
@@ -98,6 +99,7 @@ function LoginContent() {
 
   async function onSubmit(data: LoginFormValues) {
     setIsLoading(true);
+    setLoginError(null);
     try {
       const user = await loginWithEmail(data.email, data.password);
       toast.success("Welcome back!");
@@ -106,11 +108,11 @@ function LoginContent() {
       const message =
         error instanceof Error ? error.message : "Failed to sign in";
       if (message.includes("user-not-found") || message.includes("wrong-password") || message.includes("invalid-credential")) {
-        toast.error("Invalid email or password. Please try again.");
+        setLoginError("Invalid email or password. Please try again.");
       } else if (message.includes("too-many-requests")) {
-        toast.error("Too many attempts. Please try again later.");
+        setLoginError("Too many attempts. Please try again later.");
       } else {
-        toast.error(message);
+        setLoginError(message);
       }
     } finally {
       setIsLoading(false);
@@ -131,7 +133,7 @@ function LoginContent() {
       if (message.includes("popup-closed")) {
         return; // user closed the popup, no error needed
       }
-      toast.error(message);
+      setLoginError(message);
     } finally {
       setIsGoogleLoading(false);
     }
@@ -226,6 +228,12 @@ function LoginContent() {
                 </p>
               )}
             </div>
+
+            {loginError && (
+              <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {loginError}
+              </p>
+            )}
 
             <Button type="submit" className="w-full" disabled={isDisabled}>
               {isLoading ? (
