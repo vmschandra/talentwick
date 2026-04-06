@@ -74,11 +74,13 @@ function LoginContent() {
 
   async function redirectByRole(uid: string) {
     const userDoc = await getUserDoc(uid);
+    document.cookie = `session=${uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+
     if (!userDoc) {
-      router.push("/register");
+      // New user (e.g. first Google sign-in) — send to profile setup
+      router.push("/candidate/profile");
       return;
     }
-    document.cookie = `session=${uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
 
     switch (userDoc.role) {
       case "admin":
@@ -118,7 +120,9 @@ function LoginContent() {
   async function handleGoogleLogin() {
     setIsGoogleLoading(true);
     try {
-      const user = await loginWithGoogle();
+      // Pass the role from query param so a user doc is created for first-time Google users
+      const selectedRole = role === "admin" ? undefined : role || undefined;
+      const user = await loginWithGoogle(selectedRole || "candidate");
       toast.success("Welcome back!");
       await redirectByRole(user.uid);
     } catch (error: unknown) {
