@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
 import { Loader2, Mail, Lock, Globe, UserCircle, Building, ShieldCheck } from "lucide-react";
 
 import { loginWithEmail, loginWithGoogle, getUserDoc } from "@/lib/firebase/auth";
@@ -97,23 +96,28 @@ function LoginContent() {
     }
   }
 
+  function getFriendlyError(error: unknown): string {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes("user-not-found")) return "Account doesn't exist. Please register.";
+    if (message.includes("wrong-password") || message.includes("invalid-credential")) return "Invalid email or password. Please try again.";
+    if (message.includes("too-many-requests")) return "Too many attempts. Please try again later.";
+    if (message.includes("operation-not-allowed")) return "This sign-in method is not enabled. Please try another method.";
+    if (message.includes("network-request-failed")) return "Network error. Please check your connection and try again.";
+    if (message.includes("user-disabled")) return "This account has been disabled. Please contact support.";
+    if (message.includes("invalid-email")) return "Please enter a valid email address.";
+    if (message.includes("popup-closed") || message.includes("cancelled-popup-request")) return "";
+    if (message.includes("unauthorized-domain")) return "This domain is not authorized. Please contact support.";
+    return "Something went wrong. Please try again.";
+  }
+
   async function onSubmit(data: LoginFormValues) {
     setIsLoading(true);
     setLoginError(null);
     try {
       const user = await loginWithEmail(data.email, data.password);
-      toast.success("Welcome back!");
       await redirectByRole(user.uid);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to sign in";
-      if (message.includes("user-not-found") || message.includes("wrong-password") || message.includes("invalid-credential")) {
-        setLoginError("Invalid email or password. Please try again.");
-      } else if (message.includes("too-many-requests")) {
-        setLoginError("Too many attempts. Please try again later.");
-      } else {
-        setLoginError(message);
-      }
+      setLoginError(getFriendlyError(error));
     } finally {
       setIsLoading(false);
     }
@@ -121,19 +125,14 @@ function LoginContent() {
 
   async function handleGoogleLogin() {
     setIsGoogleLoading(true);
+    setLoginError(null);
     try {
-      // Pass the role from query param so a user doc is created for first-time Google users
       const selectedRole = role === "admin" ? undefined : role || undefined;
       const user = await loginWithGoogle(selectedRole || "candidate");
-      toast.success("Welcome back!");
       await redirectByRole(user.uid);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Google sign-in failed";
-      if (message.includes("popup-closed")) {
-        return; // user closed the popup, no error needed
-      }
-      setLoginError(message);
+      const msg = getFriendlyError(error);
+      if (msg) setLoginError(msg);
     } finally {
       setIsGoogleLoading(false);
     }
