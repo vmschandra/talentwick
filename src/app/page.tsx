@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { siteConfig } from "@/config/site";
-import { Briefcase, Users, CreditCard, Search, ArrowRight, CheckCircle2, Building, TrendingUp, UserCircle, UserPlus } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Briefcase, Users, CreditCard, Search, ArrowRight, Building, TrendingUp, UserCircle, UserPlus, LayoutDashboard } from "lucide-react";
 
 const stats = [
   { label: "Jobs Posted", value: "10,000+", icon: <Briefcase className="h-5 w-5" /> },
@@ -39,6 +40,16 @@ const steps = [
 ];
 
 export default function HomePage() {
+  const { user, userDoc, loading } = useAuth();
+  const isLoggedIn = !loading && !!user;
+
+  const dashboardPath =
+    userDoc?.role === "recruiter"
+      ? "/recruiter/dashboard"
+      : userDoc?.role === "admin"
+      ? "/admin/dashboard"
+      : "/candidate/dashboard";
+
   return (
     <div>
       {/* Hero */}
@@ -53,62 +64,94 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Role-based login cards */}
-          <div className="mx-auto mt-12 grid max-w-2xl gap-6 sm:grid-cols-2">
-            <Link href="/login?role=candidate" className="group">
-              <Card className="h-full transition-all hover:shadow-lg hover:border-primary/50">
-                <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                    <UserCircle className="h-8 w-8" />
+          {isLoggedIn ? (
+            <div className="mx-auto mt-12 max-w-md text-center">
+              <Card>
+                <CardContent className="flex flex-col items-center gap-4 p-8">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <LayoutDashboard className="h-8 w-8" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold">I&apos;m a Job Seeker</h3>
+                    <h3 className="text-xl font-semibold">
+                      Welcome back{userDoc?.displayName ? `, ${userDoc.displayName.split(" ")[0]}` : ""}!
+                    </h3>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Search and apply for jobs from top companies
+                      Pick up where you left off
                     </p>
                   </div>
-                  <Button className="mt-2 w-full gap-2">
-                    Log in as Candidate <ArrowRight className="h-4 w-4" />
-                  </Button>
-                  <p className="text-xs text-muted-foreground">
-                    New here?{" "}
-                    <span className="text-primary underline">Create an account</span>
-                  </p>
+                  <Link href={dashboardPath} className="w-full">
+                    <Button className="w-full gap-2">
+                      Go to Dashboard <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link href="/browse-jobs" className="w-full">
+                    <Button variant="outline" className="w-full gap-2">
+                      <Search className="h-4 w-4" /> Browse Jobs
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
-            </Link>
+            </div>
+          ) : (
+            <>
+              {/* Role-based login cards */}
+              <div className="mx-auto mt-12 grid max-w-2xl gap-6 sm:grid-cols-2">
+                <Link href="/login?role=candidate" className="group">
+                  <Card className="h-full transition-all hover:shadow-lg hover:border-primary/50">
+                    <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                        <UserCircle className="h-8 w-8" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-semibold">I&apos;m a Job Seeker</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Search and apply for jobs from top companies
+                        </p>
+                      </div>
+                      <Button className="mt-2 w-full gap-2">
+                        Log in as Candidate <ArrowRight className="h-4 w-4" />
+                      </Button>
+                      <p className="text-xs text-muted-foreground">
+                        New here?{" "}
+                        <span className="text-primary underline">Create an account</span>
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
 
-            <Link href="/login?role=recruiter" className="group">
-              <Card className="h-full transition-all hover:shadow-lg hover:border-primary/50">
-                <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                    <Building className="h-8 w-8" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold">I&apos;m a Recruiter</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Post jobs and find the perfect candidates
-                    </p>
-                  </div>
-                  <Button className="mt-2 w-full gap-2">
-                    Log in as Recruiter <ArrowRight className="h-4 w-4" />
+                <Link href="/login?role=recruiter" className="group">
+                  <Card className="h-full transition-all hover:shadow-lg hover:border-primary/50">
+                    <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                        <Building className="h-8 w-8" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-semibold">I&apos;m a Recruiter</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Post jobs and find the perfect candidates
+                        </p>
+                      </div>
+                      <Button className="mt-2 w-full gap-2">
+                        Log in as Recruiter <ArrowRight className="h-4 w-4" />
+                      </Button>
+                      <p className="text-xs text-muted-foreground">
+                        New here?{" "}
+                        <span className="text-primary underline">Create an account</span>
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </div>
+
+              <div className="mt-8 text-center">
+                <Link href="/browse-jobs">
+                  <Button variant="ghost" size="lg" className="gap-2 text-muted-foreground">
+                    <Search className="h-4 w-4" /> Or browse jobs without signing in
                   </Button>
-                  <p className="text-xs text-muted-foreground">
-                    New here?{" "}
-                    <span className="text-primary underline">Create an account</span>
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-          </div>
-
-          <div className="mt-8 text-center">
-            <Link href="/browse-jobs">
-              <Button variant="ghost" size="lg" className="gap-2 text-muted-foreground">
-                <Search className="h-4 w-4" /> Or browse jobs without signing in
-              </Button>
-            </Link>
-          </div>
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
@@ -166,27 +209,29 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-        <div className="rounded-2xl bg-primary p-10 text-center text-primary-foreground md:p-16">
-          <h2 className="text-3xl font-bold">Ready to Get Started?</h2>
-          <p className="mt-4 text-primary-foreground/80">
-            Join thousands of professionals and companies already using {siteConfig.name}.
-          </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link href="/register">
-              <Button size="lg" variant="secondary" className="gap-2">
-                <UserPlus className="h-4 w-4" /> Sign Up as Candidate
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button size="lg" variant="secondary" className="gap-2">
-                <Building className="h-4 w-4" /> Sign Up as Recruiter
-              </Button>
-            </Link>
+      {/* CTA — only show for logged-out visitors */}
+      {!isLoggedIn && (
+        <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+          <div className="rounded-2xl bg-primary p-10 text-center text-primary-foreground md:p-16">
+            <h2 className="text-3xl font-bold">Ready to Get Started?</h2>
+            <p className="mt-4 text-primary-foreground/80">
+              Join thousands of professionals and companies already using {siteConfig.name}.
+            </p>
+            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <Link href="/register">
+                <Button size="lg" variant="secondary" className="gap-2">
+                  <UserPlus className="h-4 w-4" /> Sign Up as Candidate
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button size="lg" variant="secondary" className="gap-2">
+                  <Building className="h-4 w-4" /> Sign Up as Recruiter
+                </Button>
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }
