@@ -1,6 +1,6 @@
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
-import { getFirestore, Firestore } from "firebase/firestore";
+import { initializeFirestore, getFirestore, Firestore } from "firebase/firestore";
 import { getStorage, FirebaseStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -14,14 +14,23 @@ const firebaseConfig = {
 
 // Guard: skip init when env vars are absent (Vercel static generation).
 // All consumer code runs client-side at runtime when vars are available.
+const isNewApp = firebaseConfig.apiKey && getApps().length === 0;
 const app: FirebaseApp | undefined = firebaseConfig.apiKey
-  ? getApps().length === 0
+  ? isNewApp
     ? initializeApp(firebaseConfig)
     : getApps()[0]
   : undefined;
 
+// initializeFirestore must run before any getFirestore() call for this app.
+// ignoreUndefinedProperties lets us pass optional fields without crashing.
+const firestore: Firestore | undefined = app
+  ? isNewApp
+    ? initializeFirestore(app, { ignoreUndefinedProperties: true })
+    : getFirestore(app)
+  : undefined;
+
 export const auth = (app ? getAuth(app) : undefined) as Auth;
-export const db = (app ? getFirestore(app) : undefined) as Firestore;
+export const db = firestore as Firestore;
 export const storage = (app ? getStorage(app) : undefined) as FirebaseStorage;
 export const firebaseConfigured = !!app;
 export default app;
