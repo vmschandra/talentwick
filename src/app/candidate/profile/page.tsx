@@ -45,6 +45,8 @@ import {
 
 // ─── Schema ────────────────────────────────────────────────
 const basicInfoSchema = z.object({
+  firstName: z.string().min(1, "First name is required").max(50, "First name must be under 50 characters"),
+  lastName: z.string().min(1, "Last name is required").max(50, "Last name must be under 50 characters"),
   headline: z.string().max(120, "Headline must be under 120 characters").optional(),
   summary: z.string().max(2000, "Summary must be under 2000 characters").optional(),
   location: z.string().max(100).optional(),
@@ -111,6 +113,8 @@ export default function CandidateProfilePage() {
   } = useForm<BasicInfoFormValues>({
     resolver: zodResolver(basicInfoSchema) as any,
     defaultValues: {
+      firstName: "",
+      lastName: "",
       headline: "",
       summary: "",
       location: "",
@@ -160,6 +164,17 @@ export default function CandidateProfilePage() {
           setResumeURL(existing.resumeURL);
           setResumeFileName(existing.resumeFileName);
           setOpenToWork(existing.openToWork ?? true);
+        }
+        // Pre-fill first/last name by splitting displayName on first space
+        const displayName = userDoc?.displayName?.trim() || "";
+        if (displayName) {
+          const spaceIdx = displayName.indexOf(" ");
+          if (spaceIdx === -1) {
+            setValue("firstName", displayName);
+          } else {
+            setValue("firstName", displayName.slice(0, spaceIdx));
+            setValue("lastName", displayName.slice(spaceIdx + 1));
+          }
         }
         // Pre-fill phone from userDoc
         if (userDoc?.phone) {
@@ -248,8 +263,10 @@ export default function CandidateProfilePage() {
 
       await saveCandidateProfile(user.uid, profileData);
 
-      // Update user doc: phone and onboarding status
+      // Update user doc: name, phone and onboarding status
+      const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`.trim();
       const userUpdates: Record<string, unknown> = {
+        displayName: fullName,
         updatedAt: serverTimestamp(),
       };
       if (formData.phone !== undefined) {
@@ -317,6 +334,31 @@ export default function CandidateProfilePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  placeholder="John"
+                  {...register("firstName")}
+                />
+                {errors.firstName && (
+                  <p className="text-sm text-destructive">{errors.firstName.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  placeholder="Doe"
+                  {...register("lastName")}
+                />
+                {errors.lastName && (
+                  <p className="text-sm text-destructive">{errors.lastName.message}</p>
+                )}
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="headline">Professional Headline</Label>
               <Input
