@@ -78,21 +78,33 @@ export default function CandidateDashboardPage() {
     }
 
     async function fetchData() {
-      try {
-        const [profileData, applicationsData, jobsData] = await Promise.all([
-          getCandidateProfile(user!.uid),
-          getCandidateApplications(user!.uid),
-          searchJobs(undefined, undefined, 6),
-        ]);
+      // Fetch each source independently so one failure (e.g. a missing
+      // Firestore index on applications) doesn't zero out the whole dashboard.
+      const [profileResult, applicationsResult, jobsResult] = await Promise.allSettled([
+        getCandidateProfile(user!.uid),
+        getCandidateApplications(user!.uid),
+        searchJobs(undefined, undefined, 6),
+      ]);
 
-        setProfile(profileData);
-        setApplications(applicationsData);
-        setRecommendedJobs(jobsData.jobs);
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
-      } finally {
-        setLoading(false);
+      if (profileResult.status === "fulfilled") {
+        setProfile(profileResult.value);
+      } else {
+        console.error("Failed to load candidate profile:", profileResult.reason);
       }
+
+      if (applicationsResult.status === "fulfilled") {
+        setApplications(applicationsResult.value);
+      } else {
+        console.error("Failed to load applications:", applicationsResult.reason);
+      }
+
+      if (jobsResult.status === "fulfilled") {
+        setRecommendedJobs(jobsResult.value.jobs);
+      } else {
+        console.error("Failed to load recommended jobs:", jobsResult.reason);
+      }
+
+      setLoading(false);
     }
 
     fetchData();
