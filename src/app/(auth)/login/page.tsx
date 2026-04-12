@@ -194,9 +194,28 @@ function LoginContent() {
     try {
       const selectedRole = role === "admin" ? undefined : role || undefined;
       const user = await loginWithGoogle(selectedRole || "candidate");
-      await redirectByRole(user.uid);
+      // Set cookie immediately before any redirect
+      document.cookie = `session=${user.uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+      const userDocData = await getUserDoc(user.uid);
+
+      if (!userDocData) {
+        window.location.href = "/candidate/profile";
+        return;
+      }
+
+      switch (userDocData.role) {
+        case "admin":
+          window.location.href = "/admin/dashboard";
+          break;
+        case "recruiter":
+          window.location.href = userDocData.onboardingComplete ? "/recruiter/dashboard" : "/recruiter/company-profile";
+          break;
+        case "candidate":
+        default:
+          window.location.href = userDocData.onboardingComplete ? "/candidate/dashboard" : "/candidate/profile";
+          break;
+      }
     } catch (error: unknown) {
-      // Show raw error on page temporarily for debugging
       const raw = error instanceof Error ? error.message : String(error);
       setLoginError(`DEBUG: ${raw}`);
     } finally {
