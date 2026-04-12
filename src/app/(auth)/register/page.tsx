@@ -89,9 +89,31 @@ export default function RegisterPage() {
     setIsGoogleLoading(true);
     try {
       const user = await loginWithGoogle(role);
+      const existingDoc = await getUserDoc(user.uid);
+
+      // If account already exists with a different role, block it
+      if (existingDoc && existingDoc.role !== role) {
+        const existingRole = existingDoc.role === "recruiter" ? "Recruiter" : "Candidate";
+        toast.error(
+          `This Google account is already registered as a ${existingRole}. Please use a different account.`
+        );
+        return;
+      }
+
       document.cookie = `session=${user.uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
-      toast.success("Account created! Let's set up your profile.");
-      redirectToOnboarding(role, user.uid);
+
+      if (existingDoc) {
+        // Account exists with same role — just log them in
+        toast.success("Welcome back! Redirecting to your dashboard.");
+        if (role === "recruiter") {
+          window.location.href = existingDoc.onboardingComplete ? "/recruiter/dashboard" : "/recruiter/company-profile";
+        } else {
+          window.location.href = existingDoc.onboardingComplete ? "/candidate/dashboard" : "/candidate/profile";
+        }
+      } else {
+        toast.success("Account created! Let's set up your profile.");
+        redirectToOnboarding(role, user.uid);
+      }
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Google sign-up failed";

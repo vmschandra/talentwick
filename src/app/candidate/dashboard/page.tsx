@@ -111,11 +111,7 @@ export default function CandidateDashboardPage() {
   }, [user, userDoc, authLoading, router]);
 
   if (authLoading || loading) {
-    return (
-      <div className="container mx-auto max-w-7xl px-4 py-8">
-        <DashboardSkeleton />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (!user || !userDoc) return null;
@@ -135,9 +131,9 @@ export default function CandidateDashboardPage() {
   const recentApplications = applications.slice(0, 5);
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-8">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="mb-8">
+      <div>
         <h1 className="text-3xl font-bold tracking-tight">
           Welcome back, {userDoc.displayName?.split(" ")[0] || "there"}
         </h1>
@@ -147,7 +143,7 @@ export default function CandidateDashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Applications Sent"
           value={applications.length}
@@ -176,7 +172,7 @@ export default function CandidateDashboardPage() {
 
       {/* Profile Completeness Banner */}
       {profileCompleteness < 100 && (
-        <Card className="mb-8 border-yellow-200 bg-yellow-50 dark:border-yellow-900 dark:bg-yellow-950">
+        <Card className="border-yellow-200 bg-yellow-50 dark:border-yellow-900 dark:bg-yellow-950">
           <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex-1">
               <p className="font-medium text-yellow-900 dark:text-yellow-100">
