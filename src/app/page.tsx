@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { siteConfig } from "@/config/site";
 import { useAuth } from "@/hooks/useAuth";
-import { Briefcase, Users, CreditCard, Search, ArrowRight, Building, TrendingUp, UserCircle, UserPlus, LayoutDashboard } from "lucide-react";
+import { Briefcase, Users, CreditCard, Search, ArrowRight, Building, TrendingUp, UserCircle, LayoutDashboard } from "lucide-react";
 
 const stats = [
   { label: "Jobs Posted", value: "10,000+", icon: <Briefcase className="h-5 w-5" /> },
@@ -209,29 +209,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA — only show for logged-out visitors */}
-      {!isLoggedIn && (
-        <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-          <div className="rounded-2xl bg-primary p-10 text-center text-primary-foreground md:p-16">
-            <h2 className="text-3xl font-bold">Ready to Get Started?</h2>
-            <p className="mt-4 text-primary-foreground/80">
-              Join thousands of professionals and companies already using {siteConfig.name}.
-            </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link href="/register">
-                <Button size="lg" variant="secondary" className="gap-2">
-                  <UserPlus className="h-4 w-4" /> Sign Up as Candidate
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button size="lg" variant="secondary" className="gap-2">
-                  <Building className="h-4 w-4" /> Sign Up as Recruiter
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
     </div>
   );
 }
