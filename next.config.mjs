@@ -9,6 +9,14 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ["firebase-admin"],
   },
+  async rewrites() {
+    return [
+      {
+        source: "/__/auth/:path*",
+        destination: "https://talentwick-ba718.firebaseapp.com/__/auth/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;
