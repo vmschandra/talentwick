@@ -152,7 +152,7 @@ function LoginContent() {
 
   function redirectByRole(userDocData: { role: string; onboardingComplete?: boolean } | null) {
     if (!userDocData) {
-      window.location.href = "/candidate/profile";
+      setLoginError("No account found. Please register first.");
       return;
     }
 
@@ -199,8 +199,7 @@ function LoginContent() {
     setIsGoogleLoading(true);
     setLoginError(null);
     try {
-      const selectedRole = role === "admin" ? undefined : role || undefined;
-      const user = await loginWithGoogle(selectedRole);
+      const user = await loginWithGoogle();
       document.cookie = `session=${user.uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       const userDocData = await getUserDoc(user.uid);
       redirectByRole(userDocData);
