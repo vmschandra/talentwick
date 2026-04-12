@@ -196,9 +196,9 @@ function LoginContent() {
       const user = await loginWithGoogle(selectedRole || "candidate");
       await redirectByRole(user.uid);
     } catch (error: unknown) {
-      console.error("[Google Login Error]", error);
-      const msg = getFriendlyError(error);
-      if (msg) setLoginError(msg);
+      // Show raw error on page temporarily for debugging
+      const raw = error instanceof Error ? error.message : String(error);
+      setLoginError(`DEBUG: ${raw}`);
     } finally {
       setIsGoogleLoading(false);
     }
