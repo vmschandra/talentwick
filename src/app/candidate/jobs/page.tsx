@@ -116,9 +116,9 @@ function CandidateJobsContent() {
 
   if (authLoading) {
     return (
-      <div className="container mx-auto max-w-7xl px-4 py-8">
-        <Skeleton className="h-10 w-64 mb-6" />
-        <Skeleton className="h-12 w-full mb-6" />
+      <div className="space-y-6">
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-12 w-full" />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-[200px] rounded-lg" />
@@ -129,9 +129,9 @@ function CandidateJobsContent() {
   }
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="mb-6">
+      <div>
         <h1 className="text-3xl font-bold tracking-tight">Find Jobs</h1>
         <p className="mt-1 text-muted-foreground">
           Discover opportunities that match your skills and interests.
@@ -139,7 +139,7 @@ function CandidateJobsContent() {
       </div>
 
       {/* Search Bar */}
-      <SearchBar onSearch={handleSearch} className="mb-6" />
+      <SearchBar onSearch={handleSearch} />
 
       <div className="flex gap-6">
         {/* Sidebar Filters — Desktop */}

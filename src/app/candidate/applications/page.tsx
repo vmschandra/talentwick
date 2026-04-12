@@ -57,16 +57,16 @@ export default function ApplicationsPage() {
 
   if (loading || authLoading) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6">My Applications</h1>
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">My Applications</h1>
         <div className="space-y-4">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-28" />)}</div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="text-2xl font-bold mb-6">My Applications</h1>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">My Applications</h1>
 
       {applications.length === 0 ? (
         <div className="text-center py-20">

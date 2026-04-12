@@ -288,7 +288,7 @@ export default function CandidateProfilePage() {
 
   if (authLoading || loading) {
     return (
-      <div className="container mx-auto max-w-4xl px-4 py-8">
+      <div className="space-y-6">
         <ProfileSkeleton />
       </div>
     );
@@ -297,9 +297,9 @@ export default function CandidateProfilePage() {
   if (!user || !userDoc) return null;
 
   return (
-    <div className="container mx-auto max-w-4xl px-4 py-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="mb-6">
+      <div>
         <h1 className="text-3xl font-bold tracking-tight">My Profile</h1>
         <p className="mt-1 text-muted-foreground">
           Keep your profile up to date to attract the best opportunities.
