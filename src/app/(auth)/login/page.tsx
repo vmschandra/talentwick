@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -8,7 +8,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Mail, Lock, Globe, UserCircle, Building, ShieldCheck } from "lucide-react";
 
-import { loginWithEmail, loginWithGoogle, getUserDoc } from "@/lib/firebase/auth";
+import { loginWithEmail, startGoogleLogin, handleGoogleRedirectResult, getUserDoc } from "@/lib/firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -132,33 +132,47 @@ function LoginContent() {
     defaultValues: { email: "", password: "" },
   });
 
+  // Handle Google redirect result when user returns from Google sign-in
+  useEffect(() => {
+    async function checkRedirectResult() {
+      try {
+        const user = await handleGoogleRedirectResult();
+        if (!user) return; // No redirect result — user loaded page normally
+
+        setIsGoogleLoading(true);
+        document.cookie = `session=${user.uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+        const userDocData = await getUserDoc(user.uid);
+
+        if (!userDocData) {
+          window.location.href = "/candidate/profile";
+          return;
+        }
+
+        switch (userDocData.role) {
+          case "admin":
+            window.location.href = "/admin/dashboard";
+            break;
+          case "recruiter":
+            window.location.href = userDocData.onboardingComplete ? "/recruiter/dashboard" : "/recruiter/company-profile";
+            break;
+          case "candidate":
+          default:
+            window.location.href = userDocData.onboardingComplete ? "/candidate/dashboard" : "/candidate/profile";
+            break;
+        }
+      } catch (error: unknown) {
+        const msg = getFriendlyError(error);
+        if (msg) setLoginError(msg);
+        setIsGoogleLoading(false);
+      }
+    }
+    checkRedirectResult();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // No role selected — show the role picker
   if (!role || !roleConfig[role]) {
     return <RolePicker />;
-  }
-
-  async function redirectByRole(uid: string) {
-    const userDoc = await getUserDoc(uid);
-    document.cookie = `session=${uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
-
-    if (!userDoc) {
-      // New user (e.g. first Google sign-in) — send to profile setup
-      router.push("/candidate/profile");
-      return;
-    }
-
-    switch (userDoc.role) {
-      case "admin":
-        router.push("/admin/dashboard");
-        break;
-      case "recruiter":
-        router.push(userDoc.onboardingComplete ? "/recruiter/dashboard" : "/recruiter/company-profile");
-        break;
-      case "candidate":
-      default:
-        router.push(userDoc.onboardingComplete ? "/candidate/dashboard" : "/candidate/profile");
-        break;
-    }
   }
 
   function getFriendlyError(error: unknown): string {
@@ -180,21 +194,6 @@ function LoginContent() {
     setLoginError(null);
     try {
       const user = await loginWithEmail(data.email, data.password);
-      await redirectByRole(user.uid);
-    } catch (error: unknown) {
-      setLoginError(getFriendlyError(error));
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function handleGoogleLogin() {
-    setIsGoogleLoading(true);
-    setLoginError(null);
-    try {
-      const selectedRole = role === "admin" ? undefined : role || undefined;
-      const user = await loginWithGoogle(selectedRole || "candidate");
-      // Set cookie immediately before any redirect
       document.cookie = `session=${user.uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       const userDocData = await getUserDoc(user.uid);
 
@@ -216,11 +215,17 @@ function LoginContent() {
           break;
       }
     } catch (error: unknown) {
-      const msg = getFriendlyError(error);
-      if (msg) setLoginError(msg);
+      setLoginError(getFriendlyError(error));
     } finally {
-      setIsGoogleLoading(false);
+      setIsLoading(false);
     }
+  }
+
+  function handleGoogleLogin() {
+    setIsGoogleLoading(true);
+    setLoginError(null);
+    const selectedRole = role === "admin" ? undefined : role || undefined;
+    startGoogleLogin(selectedRole || "candidate");
   }
 
   const isDisabled = isLoading || isGoogleLoading;
