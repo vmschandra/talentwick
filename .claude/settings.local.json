@@ -10,7 +10,10 @@
       "Bash(rm -rf \"\\(candidate\\)/candidate\")",
       "Bash([ -d \"candidate/$dir\" ])",
       "Bash(cp -R candidate/__TRACKED_VAR__ '\\(candidate\\)/__TRACKED_VAR__')",
-      "Bash(npx next:*)"
+      "Bash(npx next:*)",
+      "Bash(npm run:*)",
+      "Bash(ls firestore*)",
+      "Bash(ls *.rules)"
     ]
   }
 }
