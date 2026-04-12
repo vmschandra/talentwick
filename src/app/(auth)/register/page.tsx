@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -11,8 +11,8 @@ import { Loader2, Mail, Lock, User, Globe } from "lucide-react";
 
 import {
   registerWithEmail,
-  startGoogleLogin,
-  handleGoogleRedirectResult,
+  loginWithGoogle,
+  getUserDoc,
 } from "@/lib/firebase/auth";
 import { UserRole } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -85,29 +85,22 @@ export default function RegisterPage() {
     }
   }
 
-  // Handle Google redirect result when user returns from Google
-  useEffect(() => {
-    async function checkRedirectResult() {
-      try {
-        const user = await handleGoogleRedirectResult();
-        if (!user) return;
-        setIsGoogleLoading(true);
-        toast.success("Account created! Let's set up your profile.");
-        redirectToOnboarding(role, user.uid);
-      } catch (error: unknown) {
-        const message =
-          error instanceof Error ? error.message : "Google sign-up failed";
-        toast.error(message);
-        setIsGoogleLoading(false);
-      }
-    }
-    checkRedirectResult();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  function handleGoogleSignup() {
+  async function handleGoogleSignup() {
     setIsGoogleLoading(true);
-    startGoogleLogin(role);
+    try {
+      const user = await loginWithGoogle(role);
+      document.cookie = `session=${user.uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+      toast.success("Account created! Let's set up your profile.");
+      redirectToOnboarding(role, user.uid);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Google sign-up failed";
+      if (!message.includes("popup-closed") && !message.includes("cancelled-popup")) {
+        toast.error(message);
+      }
+    } finally {
+      setIsGoogleLoading(false);
+    }
   }
 
   const isDisabled = isLoading || isGoogleLoading;

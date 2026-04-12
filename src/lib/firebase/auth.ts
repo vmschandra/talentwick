@@ -1,8 +1,7 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   GoogleAuthProvider,
   signOut,
   sendPasswordResetEmail,
@@ -38,26 +37,13 @@ export async function loginWithEmail(email: string, password: string): Promise<U
   return cred.user;
 }
 
-export function startGoogleLogin(role?: UserRole): void {
-  // Store the intended role so we can use it after redirect
-  if (role) {
-    sessionStorage.setItem("googleLoginRole", role);
-  }
-  signInWithRedirect(auth, googleProvider);
-}
-
-export async function handleGoogleRedirectResult(): Promise<User | null> {
-  const result = await getRedirectResult(auth);
-  if (!result) return null;
-
-  const role = sessionStorage.getItem("googleLoginRole") as UserRole | null;
-  sessionStorage.removeItem("googleLoginRole");
-
-  const existing = await getDoc(doc(db, "users", result.user.uid));
+export async function loginWithGoogle(role?: UserRole): Promise<User> {
+  const cred = await signInWithPopup(auth, googleProvider);
+  const existing = await getDoc(doc(db, "users", cred.user.uid));
   if (!existing.exists() && role) {
-    await createUserDoc(result.user, role, result.user.displayName || "User");
+    await createUserDoc(cred.user, role, cred.user.displayName || "User");
   }
-  return result.user;
+  return cred.user;
 }
 
 export async function logout(): Promise<void> {

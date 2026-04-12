@@ -1,14 +1,14 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Mail, Lock, Globe, UserCircle, Building, ShieldCheck } from "lucide-react";
 
-import { loginWithEmail, startGoogleLogin, handleGoogleRedirectResult, getUserDoc } from "@/lib/firebase/auth";
+import { loginWithEmail, loginWithGoogle, getUserDoc } from "@/lib/firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -115,7 +115,6 @@ function RolePicker() {
 }
 
 function LoginContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const role = searchParams.get("role") as keyof typeof roleConfig | null;
   const config = role && roleConfig[role] ? roleConfig[role] : null;
@@ -131,44 +130,6 @@ function LoginContent() {
     resolver: zodResolver(loginSchema) as any,
     defaultValues: { email: "", password: "" },
   });
-
-  // Handle Google redirect result when user returns from Google sign-in
-  useEffect(() => {
-    async function checkRedirectResult() {
-      try {
-        const user = await handleGoogleRedirectResult();
-        if (!user) return; // No redirect result — user loaded page normally
-
-        setIsGoogleLoading(true);
-        document.cookie = `session=${user.uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
-        const userDocData = await getUserDoc(user.uid);
-
-        if (!userDocData) {
-          window.location.href = "/candidate/profile";
-          return;
-        }
-
-        switch (userDocData.role) {
-          case "admin":
-            window.location.href = "/admin/dashboard";
-            break;
-          case "recruiter":
-            window.location.href = userDocData.onboardingComplete ? "/recruiter/dashboard" : "/recruiter/company-profile";
-            break;
-          case "candidate":
-          default:
-            window.location.href = userDocData.onboardingComplete ? "/candidate/dashboard" : "/candidate/profile";
-            break;
-        }
-      } catch (error: unknown) {
-        const msg = getFriendlyError(error);
-        if (msg) setLoginError(msg);
-        setIsGoogleLoading(false);
-      }
-    }
-    checkRedirectResult();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // No role selected — show the role picker
   if (!role || !roleConfig[role]) {
@@ -221,11 +182,37 @@ function LoginContent() {
     }
   }
 
-  function handleGoogleLogin() {
+  async function handleGoogleLogin() {
     setIsGoogleLoading(true);
     setLoginError(null);
-    const selectedRole = role === "admin" ? undefined : role || undefined;
-    startGoogleLogin(selectedRole || "candidate");
+    try {
+      const selectedRole = role === "admin" ? undefined : role || undefined;
+      const user = await loginWithGoogle(selectedRole);
+      document.cookie = `session=${user.uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+      const userDocData = await getUserDoc(user.uid);
+
+      if (!userDocData) {
+        window.location.href = "/candidate/profile";
+        return;
+      }
+
+      switch (userDocData.role) {
+        case "admin":
+          window.location.href = "/admin/dashboard";
+          break;
+        case "recruiter":
+          window.location.href = userDocData.onboardingComplete ? "/recruiter/dashboard" : "/recruiter/company-profile";
+          break;
+        case "candidate":
+        default:
+          window.location.href = userDocData.onboardingComplete ? "/candidate/dashboard" : "/candidate/profile";
+          break;
+      }
+    } catch (error: unknown) {
+      setLoginError(getFriendlyError(error));
+    } finally {
+      setIsGoogleLoading(false);
+    }
   }
 
   const isDisabled = isLoading || isGoogleLoading;
