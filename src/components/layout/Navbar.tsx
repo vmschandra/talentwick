@@ -71,7 +71,7 @@ export default function Navbar() {
           {!loading && !user && (
             <>
               <Link href="/login?role=candidate">
-                <Button variant="ghost" size="sm">Candidate Login</Button>
+                <Button size="sm" className="bg-primary/10 text-primary hover:bg-primary/20">Candidate Login</Button>
               </Link>
               <Link href="/login?role=recruiter">
                 <Button size="sm">Recruiter Login</Button>
@@ -165,7 +165,7 @@ export default function Navbar() {
             <Link href="/browse-jobs" className="text-sm font-medium" onClick={() => setMobileOpen(false)}>Browse Jobs</Link>
             {!user ? (
               <>
-                <Link href="/login?role=candidate" onClick={() => setMobileOpen(false)}><Button variant="outline" className="w-full">Candidate Login</Button></Link>
+                <Link href="/login?role=candidate" onClick={() => setMobileOpen(false)}><Button className="w-full bg-primary/10 text-primary hover:bg-primary/20">Candidate Login</Button></Link>
                 <Link href="/login?role=recruiter" onClick={() => setMobileOpen(false)}><Button className="w-full">Recruiter Login</Button></Link>
               </>
             ) : (

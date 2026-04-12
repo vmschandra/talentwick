@@ -54,6 +54,66 @@ const roleConfig = {
   },
 };
 
+function RolePicker() {
+  return (
+    <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12">
+      <div className="w-full max-w-lg">
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-bold">Welcome to TalentWick</h1>
+          <p className="mt-2 text-muted-foreground">How would you like to sign in?</p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Link href="/login?role=candidate" className="group">
+            <Card className="h-full transition-all hover:shadow-lg hover:border-primary/50">
+              <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                  <UserCircle className="h-7 w-7" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">Job Seeker</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Find and apply for jobs
+                  </p>
+                </div>
+                <Button className="w-full bg-primary/10 text-primary hover:bg-primary/20">
+                  Continue as Candidate
+                </Button>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/login?role=recruiter" className="group">
+            <Card className="h-full transition-all hover:shadow-lg hover:border-primary/50">
+              <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                  <Building className="h-7 w-7" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">Recruiter</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Post jobs and hire talent
+                  </p>
+                </div>
+                <Button className="w-full">
+                  Continue as Recruiter
+                </Button>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          Don&apos;t have an account?{" "}
+          <Link href="/register" className="font-medium text-primary hover:underline">
+            Create one
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -71,6 +131,11 @@ function LoginContent() {
     resolver: zodResolver(loginSchema) as any,
     defaultValues: { email: "", password: "" },
   });
+
+  // No role selected — show the role picker
+  if (!role || !roleConfig[role]) {
+    return <RolePicker />;
+  }
 
   async function redirectByRole(uid: string) {
     const userDoc = await getUserDoc(uid);

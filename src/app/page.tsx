@@ -108,7 +108,7 @@ export default function HomePage() {
                           Search and apply for jobs from top companies
                         </p>
                       </div>
-                      <Button className="mt-2 w-full gap-2">
+                      <Button className="mt-2 w-full gap-2 bg-primary/10 text-primary hover:bg-primary/20">
                         Log in as Candidate <ArrowRight className="h-4 w-4" />
                       </Button>
                       <p className="text-xs text-muted-foreground">
