@@ -170,7 +170,7 @@ function LoginContent() {
     if (message.includes("network-request-failed")) return "Network error. Please check your connection and try again.";
     if (message.includes("user-disabled")) return "This account has been disabled. Please contact support.";
     if (message.includes("invalid-email")) return "Please enter a valid email address.";
-    if (message.includes("popup-closed") || message.includes("cancelled-popup-request")) return "";
+    if (message.includes("popup-closed") || message.includes("cancelled-popup-request")) return "Google sign-in was cancelled. Please try again.";
     if (message.includes("unauthorized-domain")) return "This domain is not authorized. Please contact support.";
     return "Something went wrong. Please try again.";
   }
