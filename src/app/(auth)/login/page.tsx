@@ -216,8 +216,8 @@ function LoginContent() {
           break;
       }
     } catch (error: unknown) {
-      const raw = error instanceof Error ? error.message : String(error);
-      setLoginError(`DEBUG: ${raw}`);
+      const msg = getFriendlyError(error);
+      if (msg) setLoginError(msg);
     } finally {
       setIsGoogleLoading(false);
     }
