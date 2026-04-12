@@ -150,6 +150,36 @@ function LoginContent() {
     return "Something went wrong. Please try again.";
   }
 
+  function redirectByRole(userDocData: { role: string; onboardingComplete?: boolean } | null) {
+    if (!userDocData) {
+      window.location.href = "/candidate/profile";
+      return;
+    }
+
+    // Check if the user is trying to log in with a different role
+    if (role !== "admin" && userDocData.role !== role) {
+      const existingRole = userDocData.role === "recruiter" ? "Recruiter" : "Candidate";
+      const attemptedRole = role === "recruiter" ? "Recruiter" : "Candidate";
+      setLoginError(
+        `This account is registered as a ${existingRole}. Please log in from the ${existingRole} login page, or use a different account to sign in as a ${attemptedRole}.`
+      );
+      return;
+    }
+
+    switch (userDocData.role) {
+      case "admin":
+        window.location.href = "/admin/dashboard";
+        break;
+      case "recruiter":
+        window.location.href = userDocData.onboardingComplete ? "/recruiter/dashboard" : "/recruiter/company-profile";
+        break;
+      case "candidate":
+      default:
+        window.location.href = userDocData.onboardingComplete ? "/candidate/dashboard" : "/candidate/profile";
+        break;
+    }
+  }
+
   async function onSubmit(data: LoginFormValues) {
     setIsLoading(true);
     setLoginError(null);
@@ -157,24 +187,7 @@ function LoginContent() {
       const user = await loginWithEmail(data.email, data.password);
       document.cookie = `session=${user.uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       const userDocData = await getUserDoc(user.uid);
-
-      if (!userDocData) {
-        window.location.href = "/candidate/profile";
-        return;
-      }
-
-      switch (userDocData.role) {
-        case "admin":
-          window.location.href = "/admin/dashboard";
-          break;
-        case "recruiter":
-          window.location.href = userDocData.onboardingComplete ? "/recruiter/dashboard" : "/recruiter/company-profile";
-          break;
-        case "candidate":
-        default:
-          window.location.href = userDocData.onboardingComplete ? "/candidate/dashboard" : "/candidate/profile";
-          break;
-      }
+      redirectByRole(userDocData);
     } catch (error: unknown) {
       setLoginError(getFriendlyError(error));
     } finally {
@@ -190,24 +203,7 @@ function LoginContent() {
       const user = await loginWithGoogle(selectedRole);
       document.cookie = `session=${user.uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       const userDocData = await getUserDoc(user.uid);
-
-      if (!userDocData) {
-        window.location.href = "/candidate/profile";
-        return;
-      }
-
-      switch (userDocData.role) {
-        case "admin":
-          window.location.href = "/admin/dashboard";
-          break;
-        case "recruiter":
-          window.location.href = userDocData.onboardingComplete ? "/recruiter/dashboard" : "/recruiter/company-profile";
-          break;
-        case "candidate":
-        default:
-          window.location.href = userDocData.onboardingComplete ? "/candidate/dashboard" : "/candidate/profile";
-          break;
-      }
+      redirectByRole(userDocData);
     } catch (error: unknown) {
       setLoginError(getFriendlyError(error));
     } finally {
