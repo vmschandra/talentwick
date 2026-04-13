@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import {
   getRecruiterJobs,
@@ -10,15 +9,9 @@ import {
 } from "@/lib/firebase/firestore";
 import { CandidateProfile, Job } from "@/types";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Sparkles,
-  Users,
-  MapPin,
-  PlusCircle,
-} from "lucide-react";
+import { Sparkles, Users, MapPin } from "lucide-react";
 
 interface ScoredCandidate extends CandidateProfile {
   matchScore: number;
@@ -95,23 +88,14 @@ export default function RecruiterHomePage() {
   const otherCandidates = recommendations.filter((c) => c.matchScore === 0);
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Welcome back, {userDoc.displayName?.split(" ")[0] || "there"}
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            {activeJobs > 0
-              ? "Browse candidates available for hiring — top matches for your jobs are shown first."
-              : "Browse candidates available for hiring. Post a job to get personalized recommendations."}
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/recruiter/post-job">
-            <PlusCircle className="mr-2 h-4 w-4" /> Post a Job
-          </Link>
-        </Button>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Candidates</h1>
+        <p className="mt-1 text-muted-foreground">
+          {activeJobs > 0
+            ? "Top matches for your active job postings are shown first."
+            : "Browse all candidates available for hiring."}
+        </p>
       </div>
 
       {recommendations.length === 0 ? (

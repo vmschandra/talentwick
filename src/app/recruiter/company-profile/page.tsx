@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { getRecruiterProfile, saveRecruiterProfile } from "@/lib/firebase/firestore";
 import { uploadCompanyLogo } from "@/lib/firebase/storage";
@@ -76,6 +77,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 export default function CompanyProfilePage() {
   const { user, userDoc, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -87,7 +89,7 @@ export default function CompanyProfilePage() {
     handleSubmit,
     setValue,
     watch,
-    formState: { errors },
+    formState: { errors, isDirty },
     reset,
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema) as any,
@@ -162,15 +164,25 @@ export default function CompanyProfilePage() {
         companyLogo: logoURL,
       });
 
+      const wasOnboarding = userDoc && !userDoc.onboardingComplete;
+
       // Mark onboarding complete if first time
-      if (userDoc && !userDoc.onboardingComplete) {
+      if (wasOnboarding) {
         await updateDoc(doc(db, "users", user.uid), {
           onboardingComplete: true,
           updatedAt: serverTimestamp(),
         });
       }
 
+      // Reset the form's "dirty" state so the save button reflects no pending changes
+      reset(data, { keepValues: true });
+
       toast.success("Company profile saved successfully");
+
+      // Redirect to home after first-time setup
+      if (wasOnboarding) {
+        router.push("/recruiter/dashboard");
+      }
     } catch (error) {
       console.error("Failed to save profile:", error);
       toast.error("Failed to save profile");
@@ -334,9 +346,9 @@ export default function CompanyProfilePage() {
               )}
             </div>
 
-            <Button type="submit" disabled={saving} className="w-full sm:w-auto">
+            <Button type="submit" disabled={saving || !isDirty} className="w-full sm:w-auto">
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {saving ? "Saving..." : "Save Profile"}
+              {saving ? "Saving..." : isDirty ? "Save Profile" : "Saved"}
             </Button>
           </form>
         </CardContent>
