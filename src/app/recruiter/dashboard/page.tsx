@@ -17,7 +17,6 @@ import {
   Sparkles,
   Users,
   MapPin,
-  Briefcase,
   PlusCircle,
 } from "lucide-react";
 
@@ -92,8 +91,8 @@ export default function RecruiterHomePage() {
   if (!user || !userDoc) return null;
 
   const activeJobs = jobs.filter((j) => j.status === "active").length;
-  const topMatches = recommendations.filter((c) => c.matchScore > 0).slice(0, 8);
-  const otherCandidates = recommendations.filter((c) => c.matchScore === 0).slice(0, 6);
+  const matchedCandidates = recommendations.filter((c) => c.matchScore > 0);
+  const otherCandidates = recommendations.filter((c) => c.matchScore === 0);
 
   return (
     <div className="space-y-8">
@@ -104,8 +103,8 @@ export default function RecruiterHomePage() {
           </h1>
           <p className="mt-1 text-muted-foreground">
             {activeJobs > 0
-              ? "Candidates matched to the skills you're hiring for."
-              : "Post a job to see candidate recommendations."}
+              ? "Browse candidates available for hiring — top matches for your jobs are shown first."
+              : "Browse candidates available for hiring. Post a job to get personalized recommendations."}
           </p>
         </div>
         <Button asChild>
@@ -115,66 +114,42 @@ export default function RecruiterHomePage() {
         </Button>
       </div>
 
-      {activeJobs === 0 && (
-        <Card className="border-yellow-200 bg-yellow-50 dark:border-yellow-900 dark:bg-yellow-950">
-          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-            <Briefcase className="h-10 w-10 text-yellow-700 dark:text-yellow-300" />
-            <p className="font-medium text-yellow-900 dark:text-yellow-100">
-              No active jobs yet
-            </p>
-            <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              Post your first job to get recommended candidates based on the skills you need.
-            </p>
-            <Button asChild className="mt-2">
-              <Link href="/recruiter/post-job">Post Your First Job</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {activeJobs > 0 && topMatches.length > 0 && (
-        <section>
-          <div className="mb-4 flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Recommended candidates</h2>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {topMatches.map((candidate) => (
-              <CandidateCard key={candidate.uid} candidate={candidate} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {activeJobs > 0 && topMatches.length === 0 && recommendations.length > 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-            <Users className="h-10 w-10 text-muted-foreground" />
-            <p className="text-muted-foreground">
-              No candidates match the skills for your posted jobs yet.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {otherCandidates.length > 0 && topMatches.length === 0 && (
-        <section>
-          <h2 className="mb-4 text-xl font-semibold">Browse candidates</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {otherCandidates.map((candidate) => (
-              <CandidateCard key={candidate.uid} candidate={candidate} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {recommendations.length === 0 && (
+      {recommendations.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
             <Users className="h-10 w-10 text-muted-foreground" />
             <p className="text-muted-foreground">No candidates available yet.</p>
           </CardContent>
         </Card>
+      ) : (
+        <>
+          {matchedCandidates.length > 0 && (
+            <section>
+              <div className="mb-4 flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                <h2 className="text-xl font-semibold">Recommended for your jobs</h2>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {matchedCandidates.map((candidate) => (
+                  <CandidateCard key={candidate.uid} candidate={candidate} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {otherCandidates.length > 0 && (
+            <section>
+              <h2 className="mb-4 text-xl font-semibold">
+                {matchedCandidates.length > 0 ? "Other candidates" : "All candidates"}
+              </h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {otherCandidates.map((candidate) => (
+                  <CandidateCard key={candidate.uid} candidate={candidate} />
+                ))}
+              </div>
+            </section>
+          )}
+        </>
       )}
     </div>
   );
