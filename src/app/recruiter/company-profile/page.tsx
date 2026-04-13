@@ -44,13 +44,23 @@ const industries = [
   "Other",
 ];
 
+function normalizeUrl(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
 const profileSchema = z.object({
   companyName: z.string().min(2, "Company name must be at least 2 characters"),
   companyWebsite: z
     .string()
-    .url("Enter a valid URL")
-    .or(z.literal(""))
-    .optional(),
+    .optional()
+    .transform((v) => normalizeUrl(v || ""))
+    .refine(
+      (v) => v === "" || /^https?:\/\/[^\s.]+\.[^\s]+$/i.test(v),
+      "Enter a valid website (e.g. example.com)"
+    ),
   companySize: z.enum(["1-10", "11-50", "51-200", "201-500", "500+"], {
     message: "Select a company size",
   }),
