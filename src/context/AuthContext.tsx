@@ -2,9 +2,10 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User } from "firebase/auth";
-import { onAuthChange, getUserDoc } from "@/lib/firebase/auth";
+import { doc, onSnapshot } from "firebase/firestore";
+import { onAuthChange } from "@/lib/firebase/auth";
+import { db, firebaseConfigured } from "@/lib/firebase/config";
 import { UserDoc } from "@/types";
-import { firebaseConfigured } from "@/lib/firebase/config";
 
 interface AuthContextValue {
   user: User | null;
@@ -29,18 +30,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const unsub = onAuthChange(async (firebaseUser) => {
+    // Track the active Firestore listener so we can clean it up when the
+    // auth user changes or the component unmounts.
+    let unsubDoc: (() => void) | null = null;
+
+    const unsubAuth = onAuthChange((firebaseUser) => {
+      // Tear down the previous doc listener whenever auth state changes.
+      if (unsubDoc) {
+        unsubDoc();
+        unsubDoc = null;
+      }
+
       setUser(firebaseUser);
+
       if (firebaseUser) {
-        const doc = await getUserDoc(firebaseUser.uid);
-        setUserDoc(doc);
+        // Subscribe to the user doc so updates (onboarding complete, role
+        // change, etc.) are reflected immediately without a page reload.
+        unsubDoc = onSnapshot(
+          doc(db, "users", firebaseUser.uid),
+          (snap) => {
+            setUserDoc(snap.exists() ? (snap.data() as UserDoc) : null);
+            setLoading(false);
+          },
+          () => {
+            // Permission denied or other error — treat as signed-out state.
+            setUserDoc(null);
+            setLoading(false);
+          }
+        );
       } else {
         setUserDoc(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
-    return unsub;
+    return () => {
+      unsubAuth();
+      if (unsubDoc) unsubDoc();
+    };
   }, []);
 
   return (

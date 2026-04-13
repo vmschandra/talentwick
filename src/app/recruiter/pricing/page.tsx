@@ -36,7 +36,6 @@ export default function PricingPage() {
         const c = await getRecruiterCredits(user!.uid);
         setCredits(c);
       } catch (error) {
-        console.error("Failed to fetch credits:", error);
       } finally {
         setLoading(false);
       }
@@ -78,7 +77,6 @@ export default function PricingPage() {
         throw new Error("No checkout URL returned");
       }
     } catch (error) {
-      console.error("Checkout error:", error);
       const message = error instanceof Error ? error.message : "Failed to start checkout";
       toast.error(message);
     } finally {

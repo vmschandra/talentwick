@@ -68,7 +68,6 @@ export default function ApplicantsPage() {
         setJob(jobData);
         setApplications(appData);
       } catch (error) {
-        console.error("Failed to load applicants:", error);
         toast.error("Failed to load applicant data");
       } finally {
         setLoading(false);
@@ -89,7 +88,6 @@ export default function ApplicantsPage() {
       );
       toast.success(`Status updated to "${newStatus}"`);
     } catch (error) {
-      console.error("Failed to update status:", error);
       toast.error("Failed to update applicant status");
     }
   }

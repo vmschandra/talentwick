@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ interface HealthStatus {
 }
 
 export default function AdminSettingsPage() {
+  const { user } = useAuth();
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [loadingHealth, setLoadingHealth] = useState(true);
 
@@ -48,9 +50,13 @@ export default function AdminSettingsPage() {
 
     setSubmitting(true);
     try {
+      const idToken = await user?.getIdToken();
       const res = await fetch("/api/payments/manual-credit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+        },
         body: JSON.stringify({
           recruiterId: recruiterId.trim(),
           credits: plan.credits,

@@ -54,6 +54,14 @@ export async function loginWithGoogle(role?: UserRole): Promise<User> {
   const existing = await getDoc(doc(db, "users", cred.user.uid));
   if (!existing.exists() && role) {
     await createUserDoc(cred.user, role, cred.user.displayName || "User");
+    // Also seed the role profile so downstream pages don't get empty data
+    await createRoleProfile(cred.user.uid, role, {
+      firstName: cred.user.displayName?.split(" ")[0] || "",
+      lastName: cred.user.displayName?.split(" ").slice(1).join(" ") || "",
+      phone: "",
+      country: "",
+      city: "",
+    });
   }
   return cred.user;
 }

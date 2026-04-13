@@ -1,37 +1,98 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ── Helpers ──────────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // get() calls are cached within a single rule evaluation, so repeated
+    // calls to userRole() in one expression cost at most one extra read.
+    function userRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && userRole() == "admin";
+    }
+
+    function isRecruiter() {
+      return isSignedIn() && userRole() == "recruiter";
+    }
+
+    // ── Users ─────────────────────────────────────────────────────────────
     match /users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth.uid == userId;
+      allow read: if isSignedIn();
+      // Own doc or admin
+      allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }
+
+    // ── Candidate Profiles ────────────────────────────────────────────────
     match /candidateProfiles/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth.uid == userId;
+      // Own profile, any recruiter, or admin
+      allow read: if isSignedIn() && (
+        request.auth.uid == userId || isRecruiter() || isAdmin()
+      );
+      allow write: if isSignedIn() && request.auth.uid == userId;
     }
+
+    // ── Recruiter Profiles ────────────────────────────────────────────────
     match /recruiterProfiles/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth.uid == userId;
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }
+
+    // ── Jobs ──────────────────────────────────────────────────────────────
     match /jobs/{jobId} {
-      allow read: if true;
-      allow create: if request.auth != null
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "recruiter";
-      allow update, delete: if request.auth.uid == resource.data.recruiterId;
+      // Active jobs are public; draft/paused/closed only visible to their owner or admin
+      allow read: if resource.data.status == "active" ||
+        (isSignedIn() && (request.auth.uid == resource.data.recruiterId || isAdmin()));
+      allow create: if isRecruiter();
+      allow update: if isSignedIn() &&
+        (request.auth.uid == resource.data.recruiterId || isAdmin());
+      allow delete: if isSignedIn() &&
+        (request.auth.uid == resource.data.recruiterId || isAdmin());
     }
+
+    // ── Applications ──────────────────────────────────────────────────────
     match /applications/{appId} {
-      allow create: if request.auth != null
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "candidate";
-      allow read: if request.auth.uid == resource.data.candidateId
-        || request.auth.uid == resource.data.recruiterId;
-      allow update: if request.auth.uid == resource.data.recruiterId
-        || request.auth.uid == resource.data.candidateId;
+      // Only candidates may apply
+      allow create: if isSignedIn() && userRole() == "candidate" &&
+        request.resource.data.candidateId == request.auth.uid;
+
+      // Owner candidate, owning recruiter, or admin may read
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.candidateId ||
+        request.auth.uid == resource.data.recruiterId ||
+        isAdmin()
+      );
+
+      // Recruiter updates status; candidate can only withdraw their own application
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.recruiterId ||
+        (
+          request.auth.uid == resource.data.candidateId &&
+          request.resource.data.status == "withdrawn" &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(["status", "statusHistory", "updatedAt"])
+        ) ||
+        isAdmin()
+      );
     }
+
+    // ── Transactions ──────────────────────────────────────────────────────
     match /transactions/{txId} {
-      allow read: if request.auth.uid == resource.data.recruiterId;
+      // Only the owning recruiter or admin may read; writes are server-side only
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.recruiterId || isAdmin()
+      );
     }
+
+    // ── Notifications ─────────────────────────────────────────────────────
     match /notifications/{notifId} {
-      allow read, update: if request.auth.uid == resource.data.userId;
+      allow read, update: if isSignedIn() &&
+        request.auth.uid == resource.data.userId;
     }
   }
 }

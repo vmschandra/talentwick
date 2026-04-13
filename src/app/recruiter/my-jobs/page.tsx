@@ -73,7 +73,6 @@ export default function MyJobsPage() {
         const data = await getRecruiterJobs(user!.uid);
         setJobs(data);
       } catch (error) {
-        console.error("Failed to load jobs:", error);
         toast.error("Failed to load your jobs");
       } finally {
         setLoading(false);
@@ -91,7 +90,6 @@ export default function MyJobsPage() {
       );
       toast.success(`Job ${newStatus === "active" ? "activated" : newStatus}`);
     } catch (error) {
-      console.error("Failed to update job status:", error);
       toast.error("Failed to update job status");
     }
   }
@@ -105,7 +103,6 @@ export default function MyJobsPage() {
       setJobs((prev) => prev.filter((j) => j.id !== jobToDelete.id));
       toast.success("Job deleted successfully");
     } catch (error) {
-      console.error("Failed to delete job:", error);
       toast.error("Failed to delete job");
     } finally {
       setDeleting(false);

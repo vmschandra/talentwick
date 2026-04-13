@@ -140,7 +140,6 @@ export default function PostJobPage() {
         const p = await getRecruiterProfile(user!.uid);
         setProfile(p);
       } catch (error) {
-        console.error("Failed to load profile:", error);
       } finally {
         setLoading(false);
       }
@@ -214,7 +213,6 @@ export default function PostJobPage() {
       toast.success("Job posted successfully!");
       router.push(`/recruiter/my-jobs/${jobId}`);
     } catch (error) {
-      console.error("Failed to post job:", error);
       const message = error instanceof Error ? error.message : "Failed to post job";
       toast.error(message);
     } finally {

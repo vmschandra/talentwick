@@ -4,10 +4,9 @@ interface EmailPayload {
   html: string;
 }
 
-async function sendEmail(payload: EmailPayload): Promise<void> {
-  // No email provider configured — log to console
-  console.log("[Email]", payload.to, payload.subject);
-  console.log("[Email Body]", payload.html.slice(0, 200));
+async function sendEmail(_payload: EmailPayload): Promise<void> {
+  // No email provider configured. Wire up Resend, SendGrid, or SMTP
+  // via the RESEND_API_KEY / SENDGRID_API_KEY / SMTP_* env vars.
 }
 
 export async function sendWelcomeEmail(email: string, name: string): Promise<void> {

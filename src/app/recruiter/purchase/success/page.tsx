@@ -28,7 +28,6 @@ export default function PurchaseSuccessPage() {
         const c = await getRecruiterCredits(user!.uid);
         setCredits(c);
       } catch (error) {
-        console.error("Failed to fetch credits:", error);
       } finally {
         setLoading(false);
       }

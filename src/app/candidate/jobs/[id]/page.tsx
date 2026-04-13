@@ -114,7 +114,6 @@ export default function JobDetailPage() {
           // Non-critical, ignore errors
         });
       } catch (error) {
-        console.error("Failed to fetch job:", error);
         toast.error("Failed to load job details.");
       } finally {
         setLoading(false);

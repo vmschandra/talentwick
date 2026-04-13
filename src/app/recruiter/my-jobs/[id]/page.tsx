@@ -183,7 +183,6 @@ export default function EditJobPage() {
 
         setSkillTags(data.skills || []);
       } catch (error) {
-        console.error("Failed to load job:", error);
         toast.error("Failed to load job details");
       } finally {
         setLoading(false);
@@ -221,7 +220,6 @@ export default function EditJobPage() {
       setJob({ ...job, status: newStatus });
       toast.success(`Job ${newStatus === "active" ? "activated" : newStatus}`);
     } catch (error) {
-      console.error("Failed to update status:", error);
       toast.error("Failed to update job status");
     } finally {
       setStatusUpdating(false);
@@ -264,7 +262,6 @@ export default function EditJobPage() {
 
       toast.success("Job updated successfully");
     } catch (error) {
-      console.error("Failed to update job:", error);
       toast.error("Failed to update job");
     } finally {
       setSaving(false);

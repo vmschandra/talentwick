@@ -53,7 +53,6 @@ export default function AdminDashboardPage() {
         });
         setRecentActivity(activity);
       } catch (err) {
-        console.error(err);
       } finally {
         setLoading(false);
       }
