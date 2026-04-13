@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User } from "firebase/auth";
-import { onAuthChange, getUserDoc, logout } from "@/lib/firebase/auth";
+import { onAuthChange, getUserDoc } from "@/lib/firebase/auth";
 import { UserDoc } from "@/types";
 import { firebaseConfigured } from "@/lib/firebase/config";
 
@@ -30,20 +30,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const unsub = onAuthChange(async (firebaseUser) => {
+      setUser(firebaseUser);
       if (firebaseUser) {
         const doc = await getUserDoc(firebaseUser.uid);
-        if (!doc) {
-          // Stale Firebase Auth session with no Firestore doc — sign out
-          await logout();
-          document.cookie = "session=; path=/; max-age=0";
-          setUser(null);
-          setUserDoc(null);
-        } else {
-          setUser(firebaseUser);
-          setUserDoc(doc);
-        }
+        setUserDoc(doc);
       } else {
-        setUser(null);
         setUserDoc(null);
       }
       setLoading(false);
