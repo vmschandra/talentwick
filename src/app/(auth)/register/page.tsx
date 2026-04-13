@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -137,7 +137,6 @@ function RolePicker() {
 }
 
 function RegisterForm({ role }: { role: "candidate" | "recruiter" }) {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -164,11 +163,8 @@ function RegisterForm({ role }: { role: "candidate" | "recruiter" }) {
 
   function redirectToOnboarding(uid: string) {
     document.cookie = `session=${uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
-    if (isRecruiter) {
-      router.push("/recruiter/company-profile");
-    } else {
-      router.push("/candidate/profile");
-    }
+    // Full page reload so AuthContext re-fetches the freshly-written user doc
+    window.location.href = isRecruiter ? "/recruiter/company-profile" : "/candidate/profile";
   }
 
   async function onSubmit(data: CandidateFormValues | RecruiterFormValues) {
