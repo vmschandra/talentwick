@@ -4,225 +4,254 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
-import { getRecruiterProfile, getRecruiterJobs } from "@/lib/firebase/firestore";
-import { RecruiterProfile, Job, JobStatus } from "@/types";
-import { formatCurrency, timeAgo } from "@/lib/utils";
-import StatsCard from "@/components/cards/StatsCard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  getRecruiterJobs,
+  getAllCandidateProfiles,
+} from "@/lib/firebase/firestore";
+import { CandidateProfile, Job } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Briefcase,
+  Sparkles,
   Users,
-  CreditCard,
-  DollarSign,
+  MapPin,
+  Briefcase,
   PlusCircle,
-  ArrowRight,
-  Eye,
 } from "lucide-react";
 
-const statusVariant: Record<JobStatus, "default" | "secondary" | "success" | "warning" | "destructive"> = {
-  draft: "secondary",
-  active: "success",
-  paused: "warning",
-  closed: "destructive",
-  expired: "secondary",
-};
+interface ScoredCandidate extends CandidateProfile {
+  matchScore: number;
+  matchedSkills: string[];
+}
 
-export default function RecruiterDashboard() {
+function scoreCandidate(candidate: CandidateProfile, jobSkills: Set<string>): ScoredCandidate {
+  const candidateSkills = candidate.skills || [];
+  const matchedSkills = candidateSkills.filter((s) =>
+    jobSkills.has(s.toLowerCase().trim())
+  );
+  const score = jobSkills.size > 0 ? (matchedSkills.length / jobSkills.size) * 100 : 0;
+  return { ...candidate, matchScore: score, matchedSkills };
+}
+
+export default function RecruiterHomePage() {
   const { user, userDoc, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  const [profile, setProfile] = useState<RecruiterProfile | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [recommendations, setRecommendations] = useState<ScoredCandidate[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (authLoading) return;
 
-    if (userDoc && !userDoc.onboardingComplete) {
+    if (!user || !userDoc) {
+      router.push("/login");
+      return;
+    }
+
+    if (!userDoc.onboardingComplete) {
       router.push("/recruiter/company-profile");
       return;
     }
 
-    if (!user) return;
-
     async function fetchData() {
-      try {
-        const [profileData, jobsData] = await Promise.all([
-          getRecruiterProfile(user!.uid),
-          getRecruiterJobs(user!.uid),
-        ]);
-        setProfile(profileData);
-        setJobs(jobsData);
-      } catch (error) {
-        console.error("Failed to load dashboard data:", error);
-      } finally {
-        setLoading(false);
-      }
+      const [jobsResult, candidatesResult] = await Promise.allSettled([
+        getRecruiterJobs(user!.uid),
+        getAllCandidateProfiles(),
+      ]);
+
+      const recruiterJobs = jobsResult.status === "fulfilled" ? jobsResult.value : [];
+      const allCandidates = candidatesResult.status === "fulfilled" ? candidatesResult.value : [];
+
+      setJobs(recruiterJobs);
+
+      // Build skill set from all active jobs posted by this recruiter
+      const jobSkills = new Set<string>();
+      recruiterJobs
+        .filter((j) => j.status === "active")
+        .forEach((j) => j.skills?.forEach((s) => jobSkills.add(s.toLowerCase().trim())));
+
+      const scored = allCandidates
+        .filter((c) => c.openToWork !== false)
+        .map((c) => scoreCandidate(c, jobSkills))
+        .sort((a, b) => b.matchScore - a.matchScore);
+
+      setRecommendations(scored);
+      setLoading(false);
     }
 
     fetchData();
   }, [user, userDoc, authLoading, router]);
 
   if (authLoading || loading) {
-    return <DashboardSkeleton />;
+    return <HomeSkeleton />;
   }
 
+  if (!user || !userDoc) return null;
+
   const activeJobs = jobs.filter((j) => j.status === "active").length;
-  const totalApplicants = jobs.reduce((sum, j) => sum + (j.applicantCount || 0), 0);
-  const credits = profile?.jobPostCredits ?? 0;
-  const totalSpent = profile?.totalSpent ?? 0;
-  const recentJobs = jobs.slice(0, 5);
+  const topMatches = recommendations.filter((c) => c.matchScore > 0).slice(0, 8);
+  const otherCandidates = recommendations.filter((c) => c.matchScore === 0).slice(0, 6);
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome back{profile?.companyName ? `, ${profile.companyName}` : ""}
+          <h1 className="text-3xl font-bold tracking-tight">
+            Welcome back, {userDoc.displayName?.split(" ")[0] || "there"}
+          </h1>
+          <p className="mt-1 text-muted-foreground">
+            {activeJobs > 0
+              ? "Candidates matched to the skills you're hiring for."
+              : "Post a job to see candidate recommendations."}
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button asChild>
-            <Link href="/recruiter/post-job">
-              <PlusCircle className="mr-2 h-4 w-4" /> Post a Job
-            </Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/recruiter/pricing">
-              <CreditCard className="mr-2 h-4 w-4" /> Buy Credits
-            </Link>
-          </Button>
-        </div>
+        <Button asChild>
+          <Link href="/recruiter/post-job">
+            <PlusCircle className="mr-2 h-4 w-4" /> Post a Job
+          </Link>
+        </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          title="Active Jobs"
-          value={activeJobs}
-          description={`${jobs.length} total`}
-          icon={<Briefcase className="h-5 w-5" />}
-        />
-        <StatsCard
-          title="Total Applicants"
-          value={totalApplicants}
-          icon={<Users className="h-5 w-5" />}
-        />
-        <StatsCard
-          title="Credits Remaining"
-          value={credits}
-          description={credits < 2 ? "Running low" : undefined}
-          icon={<CreditCard className="h-5 w-5" />}
-        />
-        <StatsCard
-          title="Total Spent"
-          value={formatCurrency(totalSpent)}
-          icon={<DollarSign className="h-5 w-5" />}
-        />
-      </div>
-
-      {/* Recent Jobs */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg">Recent Job Postings</CardTitle>
-          {jobs.length > 5 && (
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/recruiter/my-jobs">
-                View All <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
+      {activeJobs === 0 && (
+        <Card className="border-yellow-200 bg-yellow-50 dark:border-yellow-900 dark:bg-yellow-950">
+          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+            <Briefcase className="h-10 w-10 text-yellow-700 dark:text-yellow-300" />
+            <p className="font-medium text-yellow-900 dark:text-yellow-100">
+              No active jobs yet
+            </p>
+            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+              Post your first job to get recommended candidates based on the skills you need.
+            </p>
+            <Button asChild className="mt-2">
+              <Link href="/recruiter/post-job">Post Your First Job</Link>
             </Button>
-          )}
-        </CardHeader>
-        <CardContent>
-          {recentJobs.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 py-12 text-center">
-              <Briefcase className="h-10 w-10 text-muted-foreground" />
-              <p className="text-muted-foreground">No jobs posted yet</p>
-              <Button asChild>
-                <Link href="/recruiter/post-job">Post Your First Job</Link>
-              </Button>
-            </div>
-          ) : (
-            <div className="divide-y">
-              {recentJobs.map((job) => (
-                <div
-                  key={job.id}
-                  className="flex flex-col gap-2 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/recruiter/my-jobs/${job.id}`}
-                      className="font-medium hover:underline"
-                    >
-                      {job.title}
-                    </Link>
-                    <div className="mt-1 flex items-center gap-3 text-sm text-muted-foreground">
-                      <Badge variant={statusVariant[job.status]}>{job.status}</Badge>
-                      <span className="flex items-center gap-1">
-                        <Users className="h-3.5 w-3.5" />
-                        {job.applicantCount} applicant{job.applicantCount !== 1 ? "s" : ""}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Eye className="h-3.5 w-3.5" />
-                        {job.viewCount} view{job.viewCount !== 1 ? "s" : ""}
-                      </span>
-                      <span>
-                        {job.createdAt?.toDate ? timeAgo(job.createdAt.toDate()) : ""}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/recruiter/my-jobs/${job.id}/applicants`}>
-                        Applicants
-                      </Link>
-                    </Button>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/recruiter/my-jobs/${job.id}`}>Edit</Link>
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
+
+      {activeJobs > 0 && topMatches.length > 0 && (
+        <section>
+          <div className="mb-4 flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">Recommended candidates</h2>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {topMatches.map((candidate) => (
+              <CandidateCard key={candidate.uid} candidate={candidate} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {activeJobs > 0 && topMatches.length === 0 && recommendations.length > 0 && (
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+            <Users className="h-10 w-10 text-muted-foreground" />
+            <p className="text-muted-foreground">
+              No candidates match the skills for your posted jobs yet.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {otherCandidates.length > 0 && topMatches.length === 0 && (
+        <section>
+          <h2 className="mb-4 text-xl font-semibold">Browse candidates</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {otherCandidates.map((candidate) => (
+              <CandidateCard key={candidate.uid} candidate={candidate} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {recommendations.length === 0 && (
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
+            <Users className="h-10 w-10 text-muted-foreground" />
+            <p className="text-muted-foreground">No candidates available yet.</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
 
-function DashboardSkeleton() {
+function CandidateCard({ candidate }: { candidate: ScoredCandidate }) {
+  return (
+    <Card className="transition-shadow hover:shadow-md">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold text-lg truncate">
+              {candidate.headline || "Candidate"}
+            </h3>
+            {candidate.location && (
+              <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+                <MapPin className="h-3.5 w-3.5" /> {candidate.location}
+              </p>
+            )}
+          </div>
+          {candidate.matchScore > 0 && (
+            <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+              {Math.round(Math.min(candidate.matchScore, 100))}% match
+            </span>
+          )}
+        </div>
+
+        {candidate.summary && (
+          <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
+            {candidate.summary}
+          </p>
+        )}
+
+        {candidate.skills?.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {candidate.skills.slice(0, 6).map((skill) => {
+              const isMatched = candidate.matchedSkills.includes(skill);
+              return (
+                <Badge
+                  key={skill}
+                  variant={isMatched ? "default" : "secondary"}
+                  className="text-xs"
+                >
+                  {skill}
+                </Badge>
+              );
+            })}
+            {candidate.skills.length > 6 && (
+              <Badge variant="secondary" className="text-xs">
+                +{candidate.skills.length - 6}
+              </Badge>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function HomeSkeleton() {
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-start justify-between">
         <div className="space-y-2">
           <Skeleton className="h-9 w-48" />
           <Skeleton className="h-5 w-64" />
         </div>
-        <div className="flex gap-3">
-          <Skeleton className="h-10 w-32" />
-          <Skeleton className="h-10 w-32" />
+        <Skeleton className="h-10 w-32" />
+      </div>
+      <div>
+        <Skeleton className="mb-4 h-6 w-48" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-[180px] rounded-lg" />
+          ))}
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-24 w-full" />
-        ))}
-      </div>
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-48" />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 w-full" />
-          ))}
-        </CardContent>
-      </Card>
     </div>
   );
 }

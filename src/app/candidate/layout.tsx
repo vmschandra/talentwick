@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import {
-  LayoutDashboard,
+  Home,
   UserCircle,
   Briefcase,
   FileText,
 } from "lucide-react";
 
 const candidateLinks = [
-  { href: "/candidate/dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
+  { href: "/candidate/dashboard", label: "Home", icon: <Home className="h-4 w-4" /> },
   { href: "/candidate/profile", label: "My Profile", icon: <UserCircle className="h-4 w-4" /> },
   { href: "/candidate/jobs", label: "Browse Jobs", icon: <Briefcase className="h-4 w-4" /> },
   { href: "/candidate/applications", label: "My Applications", icon: <FileText className="h-4 w-4" /> },

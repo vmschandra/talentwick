@@ -44,6 +44,12 @@ export async function saveCandidateProfile(uid: string, data: Partial<CandidateP
   await setDoc(doc(db, "candidateProfiles", uid), { ...data, uid, updatedAt: serverTimestamp() }, { merge: true });
 }
 
+export async function getAllCandidateProfiles(): Promise<CandidateProfile[]> {
+  if (!firebaseConfigured) return [];
+  const snap = await getDocs(collection(db, "candidateProfiles"));
+  return snap.docs.map((d) => d.data() as CandidateProfile);
+}
+
 // ─── Recruiter Profile ───────────────────────────────────
 
 export async function getRecruiterProfile(uid: string): Promise<RecruiterProfile | null> {

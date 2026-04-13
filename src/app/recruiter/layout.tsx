@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import {
-  LayoutDashboard,
+  Home,
   Building2,
   PlusCircle,
   Briefcase,
@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 const recruiterLinks = [
-  { href: "/recruiter/dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
+  { href: "/recruiter/dashboard", label: "Home", icon: <Home className="h-4 w-4" /> },
   { href: "/recruiter/company-profile", label: "Company Profile", icon: <Building2 className="h-4 w-4" /> },
   { href: "/recruiter/post-job", label: "Post a Job", icon: <PlusCircle className="h-4 w-4" /> },
   { href: "/recruiter/my-jobs", label: "My Jobs", icon: <Briefcase className="h-4 w-4" /> },
