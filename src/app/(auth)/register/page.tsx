@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Loader2, Mail, Lock, User, Globe } from "lucide-react";
+import { Loader2, Globe, UserCircle, Building, ArrowRight } from "lucide-react";
 
 import {
   registerWithEmail,
@@ -27,49 +27,164 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-const registerSchema = z.object({
-  displayName: z.string().min(2, "Name must be at least 2 characters"),
+const baseSchema = {
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
   email: z.email("Please enter a valid email address"),
+  phone: z
+    .string()
+    .min(7, "Enter a valid phone number")
+    .regex(/^[+\d][\d\s\-()]*$/, "Enter a valid phone number"),
+  country: z.string().min(2, "Country is required"),
+  city: z.string().min(2, "City is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+};
+
+const candidateSchema = z.object(baseSchema);
+
+const recruiterSchema = z.object({
+  ...baseSchema,
+  companyName: z.string().min(2, "Company name is required"),
+  designation: z.string().min(2, "Designation is required"),
 });
 
-type RegisterFormValues = z.infer<typeof registerSchema>;
+type CandidateFormValues = z.infer<typeof candidateSchema>;
+type RecruiterFormValues = z.infer<typeof recruiterSchema>;
 
 export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-96 items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      }
+    >
+      <RegisterContent />
+    </Suspense>
+  );
+}
+
+function RegisterContent() {
+  const searchParams = useSearchParams();
+  const role = searchParams.get("role") as UserRole | null;
+
+  if (role !== "candidate" && role !== "recruiter") {
+    return <RolePicker />;
+  }
+
+  return <RegisterForm role={role} />;
+}
+
+function RolePicker() {
+  return (
+    <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12">
+      <div className="w-full max-w-lg">
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-bold">Create your TalentWick account</h1>
+          <p className="mt-2 text-muted-foreground">What kind of account would you like?</p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Link href="/register?role=candidate" className="group">
+            <Card className="h-full transition-all hover:shadow-lg hover:border-primary/50">
+              <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                  <UserCircle className="h-7 w-7" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">Job Seeker</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Find and apply for jobs
+                  </p>
+                </div>
+                <Button className="w-full bg-primary/10 text-primary hover:bg-primary/20">
+                  Sign up as Candidate <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/register?role=recruiter" className="group">
+            <Card className="h-full transition-all hover:shadow-lg hover:border-primary/50">
+              <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                  <Building className="h-7 w-7" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">Recruiter</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Post jobs and hire talent
+                  </p>
+                </div>
+                <Button className="w-full">
+                  Sign up as Recruiter <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          Already have an account?{" "}
+          <Link href="/login" className="font-medium text-primary hover:underline">
+            Sign in
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function RegisterForm({ role }: { role: "candidate" | "recruiter" }) {
   const router = useRouter();
-  const [role, setRole] = useState<UserRole>("candidate");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  const isRecruiter = role === "recruiter";
+  const schema = isRecruiter ? recruiterSchema : candidateSchema;
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema) as any,
-    defaultValues: { displayName: "", email: "", password: "" },
+  } = useForm<RecruiterFormValues>({
+    resolver: zodResolver(schema) as any,
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      country: "",
+      city: "",
+      password: "",
+      ...(isRecruiter ? { companyName: "", designation: "" } : {}),
+    },
   });
 
-  function redirectToOnboarding(selectedRole: UserRole, uid: string) {
+  function redirectToOnboarding(uid: string) {
     document.cookie = `session=${uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
-    if (selectedRole === "recruiter") {
+    if (isRecruiter) {
       router.push("/recruiter/company-profile");
     } else {
       router.push("/candidate/profile");
     }
   }
 
-  async function onSubmit(data: RegisterFormValues) {
+  async function onSubmit(data: CandidateFormValues | RecruiterFormValues) {
     setIsLoading(true);
     try {
-      const user = await registerWithEmail(
-        data.email,
-        data.password,
-        data.displayName,
-        role
-      );
+      const user = await registerWithEmail(data.email, data.password, role, {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone,
+        country: data.country,
+        city: data.city,
+        companyName: "companyName" in data ? data.companyName : undefined,
+        designation: "designation" in data ? data.designation : undefined,
+      });
       toast.success("Account created! Let's set up your profile.");
-      redirectToOnboarding(role, user.uid);
+      redirectToOnboarding(user.uid);
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Registration failed";
@@ -91,7 +206,6 @@ export default function RegisterPage() {
       const user = await loginWithGoogle(role);
       const existingDoc = await getUserDoc(user.uid);
 
-      // If account already exists with a different role, block it
       if (existingDoc && existingDoc.role !== role) {
         const existingRole = existingDoc.role === "recruiter" ? "Recruiter" : "Candidate";
         toast.error(
@@ -103,16 +217,15 @@ export default function RegisterPage() {
       document.cookie = `session=${user.uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
 
       if (existingDoc) {
-        // Account exists with same role — just log them in
         toast.success("Welcome back! Redirecting to your dashboard.");
-        if (role === "recruiter") {
+        if (isRecruiter) {
           window.location.href = existingDoc.onboardingComplete ? "/recruiter/dashboard" : "/recruiter/company-profile";
         } else {
           window.location.href = existingDoc.onboardingComplete ? "/candidate/dashboard" : "/candidate/profile";
         }
       } else {
         toast.success("Account created! Let's set up your profile.");
-        redirectToOnboarding(role, user.uid);
+        redirectToOnboarding(user.uid);
       }
     } catch (error: unknown) {
       const message =
@@ -126,66 +239,26 @@ export default function RegisterPage() {
   }
 
   const isDisabled = isLoading || isGoogleLoading;
+  const recruiterErrors = errors as Partial<Record<keyof RecruiterFormValues, { message?: string }>>;
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Create Your Account</CardTitle>
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+            {isRecruiter ? <Building className="h-6 w-6" /> : <UserCircle className="h-6 w-6" />}
+          </div>
+          <CardTitle className="text-2xl">
+            {isRecruiter ? "Create a Recruiter Account" : "Create a Candidate Account"}
+          </CardTitle>
           <CardDescription>
-            Join TalentWick and take the next step in your career
+            {isRecruiter
+              ? "Tell us about you and the company you're hiring for"
+              : "Tell us a bit about yourself to get started"}
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Role Toggle */}
-          <div className="space-y-2">
-            <Label>I want to...</Label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setRole("candidate")}
-                disabled={isDisabled}
-                className={`flex flex-col items-center gap-1.5 rounded-lg border-2 p-4 text-sm font-medium transition-colors ${
-                  role === "candidate"
-                    ? "border-primary bg-primary/5 text-primary"
-                    : "border-muted hover:border-muted-foreground/25"
-                }`}
-              >
-                <User className="h-5 w-5" />
-                Find a Job
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole("recruiter")}
-                disabled={isDisabled}
-                className={`flex flex-col items-center gap-1.5 rounded-lg border-2 p-4 text-sm font-medium transition-colors ${
-                  role === "recruiter"
-                    ? "border-primary bg-primary/5 text-primary"
-                    : "border-muted hover:border-muted-foreground/25"
-                }`}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <line x1="19" x2="19" y1="8" y2="14" />
-                  <line x1="22" x2="16" y1="11" y2="11" />
-                </svg>
-                Hire Talent
-              </button>
-            </div>
-          </div>
-
           {/* Google Signup */}
           <Button
             variant="outline"
@@ -207,67 +280,135 @@ export default function RegisterPage() {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-card px-2 text-muted-foreground">
-                Or register with email
+                Or fill in your details
               </span>
             </div>
           </div>
 
           {/* Registration Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="displayName">Full Name</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name *</Label>
                 <Input
-                  id="displayName"
-                  placeholder="John Doe"
-                  className="pl-9"
+                  id="firstName"
+                  placeholder="John"
                   disabled={isDisabled}
-                  {...register("displayName")}
+                  {...register("firstName")}
                 />
+                {errors.firstName && (
+                  <p className="text-sm text-destructive">{errors.firstName.message}</p>
+                )}
               </div>
-              {errors.displayName && (
-                <p className="text-sm text-destructive">
-                  {errors.displayName.message}
-                </p>
-              )}
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name *</Label>
+                <Input
+                  id="lastName"
+                  placeholder="Doe"
+                  disabled={isDisabled}
+                  {...register("lastName")}
+                />
+                {errors.lastName && (
+                  <p className="text-sm text-destructive">{errors.lastName.message}</p>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  className="pl-9"
-                  disabled={isDisabled}
-                  {...register("email")}
-                />
-              </div>
+              <Label htmlFor="email">Email Address *</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                disabled={isDisabled}
+                {...register("email")}
+              />
               {errors.email && (
                 <p className="text-sm text-destructive">{errors.email.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Label htmlFor="phone">Phone Number *</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="+1 555 123 4567"
+                disabled={isDisabled}
+                {...register("phone")}
+              />
+              {errors.phone && (
+                <p className="text-sm text-destructive">{errors.phone.message}</p>
+              )}
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="country">Country *</Label>
                 <Input
-                  id="password"
-                  type="password"
-                  placeholder="At least 6 characters"
-                  className="pl-9"
+                  id="country"
+                  placeholder="United States"
                   disabled={isDisabled}
-                  {...register("password")}
+                  {...register("country")}
                 />
+                {errors.country && (
+                  <p className="text-sm text-destructive">{errors.country.message}</p>
+                )}
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="city">City *</Label>
+                <Input
+                  id="city"
+                  placeholder="San Francisco"
+                  disabled={isDisabled}
+                  {...register("city")}
+                />
+                {errors.city && (
+                  <p className="text-sm text-destructive">{errors.city.message}</p>
+                )}
+              </div>
+            </div>
+
+            {isRecruiter && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="companyName">Company You&apos;re Hiring For *</Label>
+                  <Input
+                    id="companyName"
+                    placeholder="Acme Inc."
+                    disabled={isDisabled}
+                    {...register("companyName" as const)}
+                  />
+                  {recruiterErrors.companyName && (
+                    <p className="text-sm text-destructive">{recruiterErrors.companyName.message}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="designation">Your Current Designation *</Label>
+                  <Input
+                    id="designation"
+                    placeholder="Talent Acquisition Manager"
+                    disabled={isDisabled}
+                    {...register("designation" as const)}
+                  />
+                  {recruiterErrors.designation && (
+                    <p className="text-sm text-destructive">{recruiterErrors.designation.message}</p>
+                  )}
+                </div>
+              </>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password *</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="At least 6 characters"
+                disabled={isDisabled}
+                {...register("password")}
+              />
               {errors.password && (
-                <p className="text-sm text-destructive">
-                  {errors.password.message}
-                </p>
+                <p className="text-sm text-destructive">{errors.password.message}</p>
               )}
             </div>
 
@@ -278,7 +419,7 @@ export default function RegisterPage() {
                   Creating account...
                 </>
               ) : (
-                `Create ${role === "recruiter" ? "Recruiter" : "Candidate"} Account`
+                `Create ${isRecruiter ? "Recruiter" : "Candidate"} Account`
               )}
             </Button>
           </form>
@@ -296,16 +437,19 @@ export default function RegisterPage() {
           </p>
         </CardContent>
 
-        <CardFooter className="justify-center">
+        <CardFooter className="flex-col gap-3">
           <p className="text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link
-              href="/login"
+              href={`/login?role=${role}`}
               className="font-medium text-primary hover:underline"
             >
               Sign in
             </Link>
           </p>
+          <Link href="/register" className="text-xs text-muted-foreground hover:text-foreground">
+            &larr; Choose a different account type
+          </Link>
         </CardFooter>
       </Card>
     </div>

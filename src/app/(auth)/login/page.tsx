@@ -105,7 +105,7 @@ function RolePicker() {
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{" "}
-          <Link href="/register" className="font-medium text-primary hover:underline">
+          <Link href="/register?role=candidate" className="font-medium text-primary hover:underline">
             Create one
           </Link>
         </p>
@@ -323,7 +323,7 @@ function LoginContent() {
           {role !== "admin" && (
             <p className="text-sm text-muted-foreground">
               Don&apos;t have an account?{" "}
-              <Link href="/register" className="font-medium text-primary hover:underline">
+              <Link href={`/register?role=${role}`} className="font-medium text-primary hover:underline">
                 Create one
               </Link>
             </p>

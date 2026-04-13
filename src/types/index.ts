@@ -60,10 +60,11 @@ export interface RecruiterProfile {
   companyName: string;
   companyLogo?: string;
   companyWebsite?: string;
-  companySize: CompanySize;
-  industry: string;
-  companyDescription: string;
+  companySize?: CompanySize;
+  industry?: string;
+  companyDescription?: string;
   location: string;
+  designation?: string;
   jobPostCredits: number;
   totalCreditsUsed: number;
   totalSpent: number;
