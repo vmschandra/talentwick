@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import { LayoutDashboard, Users, Briefcase, DollarSign, Settings } from "lucide-react";
@@ -18,11 +18,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { userDoc, loading } = useAuth();
   const router = useRouter();
 
+  const pathname = usePathname();
+
   useEffect(() => {
     if (!loading && userDoc?.role !== "admin") {
-      router.push("/");
+      router.push(`/login?role=admin&redirect=${encodeURIComponent(pathname)}`);
     }
-  }, [loading, userDoc, router]);
+  }, [loading, userDoc, router, pathname]);
 
   if (loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
   if (userDoc?.role !== "admin") return null;

@@ -174,18 +174,32 @@ function LoginContent() {
     // server components and middleware see the fresh auth state.
     document.cookie = `session=${uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
 
-    switch (userDocData.role) {
-      case "admin":
-        window.location.href = "/admin/dashboard";
-        break;
-      case "recruiter":
-        window.location.href = userDocData.onboardingComplete ? "/recruiter/dashboard" : "/recruiter/company-profile";
-        break;
-      case "candidate":
-      default:
-        window.location.href = userDocData.onboardingComplete ? "/candidate/dashboard" : "/candidate/profile";
-        break;
+    // Onboarding takes priority — incomplete users must finish setup first.
+    if (!userDocData.onboardingComplete) {
+      window.location.href = userDocData.role === "recruiter"
+        ? "/recruiter/company-profile"
+        : "/candidate/profile";
+      return;
     }
+
+    // Default landing page per role.
+    const defaultPath =
+      userDocData.role === "admin"
+        ? "/admin/dashboard"
+        : userDocData.role === "recruiter"
+        ? "/recruiter/dashboard"
+        : "/candidate/dashboard";
+
+    // Honor the ?redirect= param only for safe internal paths.
+    const redirectParam = searchParams.get("redirect");
+    const safePath =
+      redirectParam &&
+      redirectParam.startsWith("/") &&
+      !redirectParam.startsWith("//")
+        ? redirectParam
+        : defaultPath;
+
+    window.location.href = safePath;
   }
 
   async function onSubmit(data: LoginFormValues) {

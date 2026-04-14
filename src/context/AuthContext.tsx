@@ -52,9 +52,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUserDoc(snap.exists() ? (snap.data() as UserDoc) : null);
             setLoading(false);
           },
-          () => {
-            // Permission denied or other error — treat as signed-out state.
-            setUserDoc(null);
+          (error) => {
+            // permission-denied means the session is invalid — sign the user out.
+            // Any other code (unavailable, network errors) is transient; keep
+            // the current userDoc so the UI doesn't flash logged-out mid-session.
+            if (error.code === "permission-denied") {
+              setUserDoc(null);
+            }
             setLoading(false);
           }
         );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import {
@@ -23,12 +23,13 @@ const recruiterLinks = [
 export default function RecruiterLayout({ children }: { children: React.ReactNode }) {
   const { userDoc, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!loading && userDoc?.role !== "recruiter") {
-      router.push("/");
+      router.push(`/login?role=recruiter&redirect=${encodeURIComponent(pathname)}`);
     }
-  }, [loading, userDoc, router]);
+  }, [loading, userDoc, router, pathname]);
 
   if (loading) {
     return (
