@@ -35,6 +35,16 @@ export default function ForgotPasswordPage() {
   const [isEmailSent, setIsEmailSent] = useState(false);
   const [sentEmail, setSentEmail] = useState("");
 
+  // All hooks must be declared before any conditional return.
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ForgotFormValues>({
+    resolver: zodResolver(forgotSchema),
+    defaultValues: { email: "" },
+  });
+
   // Redirect already-authenticated users away from this page
   useEffect(() => {
     if (!loading && user) {
@@ -49,15 +59,6 @@ export default function ForgotPasswordPage() {
       </div>
     );
   }
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<ForgotFormValues>({
-    resolver: zodResolver(forgotSchema),
-    defaultValues: { email: "" },
-  });
 
   async function onSubmit(data: ForgotFormValues) {
     setIsLoading(true);
