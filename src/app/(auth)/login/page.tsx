@@ -150,24 +150,29 @@ function LoginContent() {
     return "Something went wrong. Please try again.";
   }
 
-  async function redirectByRole(userDocData: { role: string; onboardingComplete?: boolean } | null) {
+  // Validates the user's role doc and either aborts (with logout) or commits
+  // the session cookie and redirects. The cookie is intentionally set AFTER
+  // validation so it is never persisted when login is rejected.
+  async function validateAndRedirect(uid: string, userDocData: { role: string; onboardingComplete?: boolean } | null) {
     if (!userDocData) {
+      await logout();
       setLoginError("No account found. Please register first.");
       return;
     }
 
-    // Check if the user is trying to log in with a different role
     if (role !== "admin" && userDocData.role !== role) {
       const existingRole = userDocData.role === "recruiter" ? "Recruiter" : "Candidate";
       const attemptedRole = role === "recruiter" ? "Recruiter" : "Candidate";
-      // Sign out immediately so the session is not left active
       await logout();
-      document.cookie = "session=; path=/; max-age=0";
       setLoginError(
         `This account is registered as a ${existingRole}. Please log in from the ${existingRole} login page, or use a different account to sign in as a ${attemptedRole}.`
       );
       return;
     }
+
+    // Validation passed — commit the session cookie then hard-navigate so all
+    // server components and middleware see the fresh auth state.
+    document.cookie = `session=${uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
 
     switch (userDocData.role) {
       case "admin":
@@ -188,9 +193,8 @@ function LoginContent() {
     setLoginError(null);
     try {
       const user = await loginWithEmail(data.email, data.password);
-      document.cookie = `session=${user.uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       const userDocData = await getUserDoc(user.uid);
-      await redirectByRole(userDocData);
+      await validateAndRedirect(user.uid, userDocData);
     } catch (error: unknown) {
       setLoginError(getFriendlyError(error));
     } finally {
@@ -203,9 +207,8 @@ function LoginContent() {
     setLoginError(null);
     try {
       const user = await loginWithGoogle();
-      document.cookie = `session=${user.uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       const userDocData = await getUserDoc(user.uid);
-      await redirectByRole(userDocData);
+      await validateAndRedirect(user.uid, userDocData);
     } catch (error: unknown) {
       setLoginError(getFriendlyError(error));
     } finally {
