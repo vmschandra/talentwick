@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/context/AuthContext";
 import { getRecruiterProfile, postJobWithCredit } from "@/lib/firebase/firestore";
 import { RecruiterProfile, JobType, WorkMode, ExperienceLevel } from "@/types";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -97,7 +97,9 @@ export default function PostJobPage() {
     watch,
     formState: { errors },
   } = useForm<JobFormData>({
-    resolver: zodResolver(jobSchema) as any,
+    // @ts-expect-error -- TS2719: @hookform/resolvers v5 ships its own Resolver type that
+    // is structurally identical to but unrelated from react-hook-form's Resolver type.
+    resolver: zodResolver(jobSchema),
     defaultValues: {
       requirements: [{ value: "" }],
       responsibilities: [{ value: "" }],
@@ -139,7 +141,8 @@ export default function PostJobPage() {
       try {
         const p = await getRecruiterProfile(user!.uid);
         setProfile(p);
-      } catch (error) {
+      } catch {
+        toast.error("Failed to load your company profile.");
       } finally {
         setLoading(false);
       }
@@ -264,6 +267,7 @@ export default function PostJobPage() {
         </Badge>
       </div>
 
+      {/* @ts-expect-error -- TS2719 resolver type mismatch; see useForm comment */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Basic Info */}
         <Card>

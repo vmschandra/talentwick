@@ -48,6 +48,19 @@ export function truncate(text: string, maxLength: number): string {
   return text.slice(0, maxLength).trimEnd() + "...";
 }
 
+export function formatSalary(
+  salary: { min: number; max: number; currency: string; period: string } | undefined | null
+): string | null {
+  if (!salary) return null;
+  const fmt = (n: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: salary.currency.toUpperCase(),
+      maximumFractionDigits: 0,
+    }).format(n);
+  return `${fmt(salary.min)} – ${fmt(salary.max)} / ${salary.period}`;
+}
+
 export function calculateProfileCompleteness(profile: Record<string, unknown>): number {
   const weights: Record<string, number> = {
     headline: 10,

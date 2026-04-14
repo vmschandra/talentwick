@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/context/AuthContext";
 import { getRecruiterCredits } from "@/lib/payments/credit-service";
 import { isManualMode, getPaymentProviderName } from "@/lib/payments/registry";
 import { pricingPlans, PricingPlan } from "@/config/pricing";
@@ -35,7 +35,8 @@ export default function PricingPage() {
       try {
         const c = await getRecruiterCredits(user!.uid);
         setCredits(c);
-      } catch (error) {
+      } catch {
+        toast.error("Failed to load your credit balance.");
       } finally {
         setLoading(false);
       }

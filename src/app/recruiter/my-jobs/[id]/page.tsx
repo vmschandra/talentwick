@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/context/AuthContext";
 import { getJob, updateJob } from "@/lib/firebase/firestore";
 import { Job, JobType, WorkMode, ExperienceLevel } from "@/types";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -104,8 +104,9 @@ export default function EditJobPage() {
     reset,
     formState: { errors },
   } = useForm<EditJobFormData>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(editJobSchema) as any,
+    // @ts-expect-error -- TS2719: @hookform/resolvers v5 ships its own Resolver type that
+    // is structurally identical to but unrelated from react-hook-form's Resolver type.
+    resolver: zodResolver(editJobSchema),
     defaultValues: {
       requirements: [{ value: "" }],
       responsibilities: [{ value: "" }],
@@ -374,6 +375,7 @@ export default function EditJobPage() {
       <Separator />
 
       {/* Edit Form */}
+      {/* @ts-expect-error -- TS2719 resolver type mismatch; see useForm comment */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <Card>
           <CardHeader>

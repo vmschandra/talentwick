@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getAllUsers } from "@/lib/firebase/firestore";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
+import { UserDoc } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,29 +15,20 @@ import { Search, UserX, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 
-interface UserRow {
-  uid: string;
-  email?: string;
-  displayName?: string;
-  role?: string;
-  isActive?: boolean;
-  createdAt?: { toDate: () => Date };
-}
-
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<UserRow[]>([]);
+  const [users, setUsers] = useState<UserDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [tab, setTab] = useState("all");
 
   useEffect(() => {
     getAllUsers()
-      .then((data) => setUsers(data as UserRow[]))
+      .then((data) => setUsers(data as UserDoc[]))
       .catch(() => toast.error("Failed to load users"))
       .finally(() => setLoading(false));
   }, []);
 
-  const toggleActive = async (uid: string, currentActive: boolean) => {
+  const toggleActive = async (uid: string, currentActive: boolean): Promise<void> => {
     try {
       await updateDoc(doc(db, "users", uid), { isActive: !currentActive });
       setUsers((prev) => prev.map((u) => (u.uid === uid ? { ...u, isActive: !currentActive } : u)));

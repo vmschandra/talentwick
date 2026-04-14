@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/context/AuthContext";
 import { getRecruiterProfile, saveRecruiterProfile } from "@/lib/firebase/firestore";
 import { uploadCompanyLogo } from "@/lib/firebase/storage";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
@@ -57,9 +57,8 @@ const profileSchema = z.object({
   companyWebsite: z
     .string()
     .optional()
-    .transform((v) => normalizeUrl(v || ""))
     .refine(
-      (v) => v === "" || /^https?:\/\/[^\s.]+\.[^\s]+$/i.test(v),
+      (v) => !v || v.trim() === "" || /^(https?:\/\/)?[^\s.]+\.[^\s]+$/i.test(v.trim()),
       "Enter a valid website (e.g. example.com)"
     ),
   companySize: z.enum(["1-10", "11-50", "51-200", "201-500", "500+"], {
@@ -92,7 +91,7 @@ export default function CompanyProfilePage() {
     formState: { errors, isDirty },
     reset,
   } = useForm<ProfileFormData>({
-    resolver: zodResolver(profileSchema) as any,
+    resolver: zodResolver(profileSchema),
   });
 
   const watchedSize = watch("companySize");
@@ -159,6 +158,7 @@ export default function CompanyProfilePage() {
     try {
       await saveRecruiterProfile(user.uid, {
         ...data,
+        companyWebsite: data.companyWebsite ? normalizeUrl(data.companyWebsite) : undefined,
         companyLogo: logoURL,
       });
 

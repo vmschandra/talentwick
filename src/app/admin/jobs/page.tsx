@@ -9,6 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Search, Trash2, Pause, Play, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
@@ -26,6 +34,7 @@ export default function AdminJobsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [tab, setTab] = useState("all");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   useEffect(() => {
     getAllJobs()
@@ -44,14 +53,16 @@ export default function AdminJobsPage() {
     }
   };
 
-  const handleDelete = async (jobId: string) => {
-    if (!confirm("Delete this job permanently?")) return;
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deleteJob(jobId);
-      setJobs((prev) => prev.filter((j) => j.id !== jobId));
+      await deleteJob(deleteTarget);
+      setJobs((prev) => prev.filter((j) => j.id !== deleteTarget));
       toast.success("Job deleted");
     } catch {
       toast.error("Failed to delete job");
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
@@ -117,7 +128,13 @@ export default function AdminJobsPage() {
                         <Play className="h-4 w-4" />
                       </Button>
                     ) : null}
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(job.id)} className="text-destructive" title="Delete">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDeleteTarget(job.id)}
+                      className="text-destructive"
+                      title="Delete"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -130,6 +147,21 @@ export default function AdminJobsPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete this job?</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. The job posting and all associated data will be permanently removed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

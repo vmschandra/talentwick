@@ -148,7 +148,9 @@ function RegisterForm({ role }: { role: "candidate" | "recruiter" }) {
     handleSubmit,
     formState: { errors },
   } = useForm<RecruiterFormValues>({
-    resolver: zodResolver(schema) as any,
+    // @ts-expect-error -- conditional schema (candidateSchema | recruiterSchema) causes resolver
+    // input type to diverge from the RecruiterFormValues form type. Runtime behavior is correct.
+    resolver: zodResolver(schema),
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -282,6 +284,7 @@ function RegisterForm({ role }: { role: "candidate" | "recruiter" }) {
           </div>
 
           {/* Registration Form */}
+          {/* @ts-expect-error -- union form type; see resolver comment above */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">

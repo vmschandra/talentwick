@@ -17,6 +17,7 @@ import {
 
 import { useJobSearch } from "@/hooks/useJobs";
 import { JobFilters, JobType, WorkMode, ExperienceLevel, Job } from "@/types";
+import { formatSalary, timeAgo } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -51,32 +52,6 @@ const EXPERIENCE_LEVELS: { value: ExperienceLevel; label: string }[] = [
   { value: "lead", label: "Lead" },
   { value: "executive", label: "Executive" },
 ];
-
-// ─── Helper: format salary ──────────────────────────────
-function formatSalary(salary: Job["salary"]) {
-  if (!salary) return null;
-  const fmt = (n: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: salary.currency,
-      maximumFractionDigits: 0,
-    }).format(n);
-  return `${fmt(salary.min)} - ${fmt(salary.max)} / ${salary.period}`;
-}
-
-// ─── Helper: relative time ──────────────────────────────
-function timeAgo(timestamp: { seconds: number }) {
-  const seconds = Math.floor(Date.now() / 1000 - timestamp.seconds);
-  if (seconds < 60) return "Just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return "Yesterday";
-  if (days < 30) return `${days}d ago`;
-  return `${Math.floor(days / 30)}mo ago`;
-}
 
 // ─── JobCard ────────────────────────────────────────────
 function JobCard({ job }: { job: Job }) {
@@ -157,7 +132,7 @@ function JobCard({ job }: { job: Job }) {
                 <span>
                   {job.applicantCount} applicant{job.applicantCount !== 1 ? "s" : ""}
                 </span>
-                <span>{timeAgo(job.createdAt as unknown as { seconds: number })}</span>
+                <span>{timeAgo(job.createdAt.toDate())}</span>
               </div>
             </div>
           </div>

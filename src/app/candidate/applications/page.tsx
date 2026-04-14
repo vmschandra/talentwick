@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
-import { getCandidateApplications, getJob } from "@/lib/firebase/firestore";
+import { useAuth } from "@/context/AuthContext";
+import { getCandidateApplications, getJobsByIds } from "@/lib/firebase/firestore";
 import { Application, ApplicationStatus } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, Building, Clock } from "lucide-react";
 import { timeAgo } from "@/lib/utils";
+import { toast } from "sonner";
 
 const statusColors: Record<ApplicationStatus, "default" | "secondary" | "success" | "warning" | "destructive"> = {
   pending: "secondary",
@@ -39,15 +40,15 @@ export default function ApplicationsPage() {
     async function load() {
       try {
         const apps = await getCandidateApplications(user!.uid);
-        const enriched: AppWithJob[] = await Promise.all(
-          apps.map(async (app) => {
-            const job = await getJob(app.jobId).catch(() => null);
-            return { ...app, jobTitle: job?.title, companyName: job?.companyName };
-          })
-        );
+        // Batch-fetch all jobs in one parallel round-trip instead of N+1 queries.
+        const jobMap = await getJobsByIds(apps.map((a) => a.jobId));
+        const enriched: AppWithJob[] = apps.map((app) => {
+          const job = jobMap.get(app.jobId);
+          return { ...app, jobTitle: job?.title, companyName: job?.companyName };
+        });
         setApplications(enriched);
       } catch {
-        // silently handle
+        toast.error("Failed to load applications. Please refresh.");
       } finally {
         setLoading(false);
       }

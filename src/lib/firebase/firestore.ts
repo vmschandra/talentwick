@@ -88,6 +88,18 @@ export async function getJob(jobId: string): Promise<Job | null> {
   return snap.exists() ? { id: snap.id, ...snap.data() } as Job : null;
 }
 
+// Fetch multiple jobs by ID in a single parallel batch (avoids N+1 queries).
+export async function getJobsByIds(jobIds: string[]): Promise<Map<string, Job>> {
+  if (!firebaseConfigured || jobIds.length === 0) return new Map();
+  const unique = Array.from(new Set(jobIds));
+  const snaps = await Promise.all(unique.map((id) => getDoc(doc(db, "jobs", id))));
+  const result = new Map<string, Job>();
+  snaps.forEach((snap) => {
+    if (snap.exists()) result.set(snap.id, { id: snap.id, ...snap.data() } as Job);
+  });
+  return result;
+}
+
 export async function updateJob(jobId: string, data: Partial<Job>): Promise<void> {
   await updateDoc(doc(db, "jobs", jobId), { ...data, updatedAt: serverTimestamp() });
 }
@@ -234,15 +246,22 @@ export async function applyToJob(data: {
   );
   if (!existing.empty) throw new Error("You have already applied to this job");
 
-  const docRef = await addDoc(collection(db, "applications"), {
-    ...data,
-    status: "pending",
-    statusHistory: [{ status: "pending", timestamp: Timestamp.now() }],
-    appliedAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+  const appRef = doc(collection(db, "applications"));
+  const jobRef = doc(db, "jobs", data.jobId);
+
+  // Create application and increment applicant count atomically so the
+  // count never drifts if one of the two writes fails.
+  await runTransaction(db, async (transaction) => {
+    transaction.set(appRef, {
+      ...data,
+      status: "pending",
+      statusHistory: [{ status: "pending", timestamp: Timestamp.now() }],
+      appliedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    transaction.update(jobRef, { applicantCount: increment(1) });
   });
 
-  await updateDoc(doc(db, "jobs", data.jobId), { applicantCount: increment(1) });
   await createNotification(
     data.recruiterId,
     "application_received",
@@ -251,7 +270,7 @@ export async function applyToJob(data: {
     `/recruiter/my-jobs/${data.jobId}/applicants`
   );
 
-  return docRef.id;
+  return appRef.id;
 }
 
 export async function hasApplied(jobId: string, candidateId: string): Promise<boolean> {

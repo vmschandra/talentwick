@@ -22,7 +22,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/context/AuthContext";
 import {
   getJob,
   hasApplied,
@@ -33,6 +33,7 @@ import {
 import { uploadResume } from "@/lib/firebase/storage";
 import { Job, CandidateProfile } from "@/types";
 import { siteConfig } from "@/config/site";
+import { formatSalary, formatDate } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,27 +51,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
-// ─── Helpers ────────────────────────────────────────────
-function formatSalary(salary: Job["salary"]) {
-  if (!salary) return null;
-  const fmt = (n: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: salary.currency,
-      maximumFractionDigits: 0,
-    }).format(n);
-  return `${fmt(salary.min)} - ${fmt(salary.max)} / ${salary.period}`;
-}
-
-function formatDate(timestamp: { seconds: number } | undefined) {
-  if (!timestamp) return "";
-  return new Date(timestamp.seconds * 1000).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
 
 // ─── Loading Skeleton ───────────────────────────────────
 function JobDetailSkeleton() {
@@ -449,7 +429,7 @@ export default function JobDetailPage() {
               <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 <span className="inline-flex items-center gap-1">
                   <Clock className="h-4 w-4" />
-                  Posted {formatDate(job.createdAt as unknown as { seconds: number })}
+                  Posted {formatDate(job.createdAt.toDate())}
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <Users className="h-4 w-4" />
@@ -599,9 +579,7 @@ export default function JobDetailPage() {
                   <p className="text-center text-sm text-muted-foreground">
                     Application deadline:{" "}
                     <span className="font-medium text-foreground">
-                      {formatDate(
-                        job.applicationDeadline as unknown as { seconds: number }
-                      )}
+                      {formatDate(job.applicationDeadline!.toDate())}
                     </span>
                   </p>
                 </>
