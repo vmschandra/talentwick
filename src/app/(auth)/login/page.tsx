@@ -8,7 +8,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Mail, Lock, Globe, UserCircle, Building, ShieldCheck } from "lucide-react";
 
-import { loginWithEmail, loginWithGoogle, getUserDoc } from "@/lib/firebase/auth";
+import { loginWithEmail, loginWithGoogle, logout, getUserDoc } from "@/lib/firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -150,7 +150,7 @@ function LoginContent() {
     return "Something went wrong. Please try again.";
   }
 
-  function redirectByRole(userDocData: { role: string; onboardingComplete?: boolean } | null) {
+  async function redirectByRole(userDocData: { role: string; onboardingComplete?: boolean } | null) {
     if (!userDocData) {
       setLoginError("No account found. Please register first.");
       return;
@@ -160,6 +160,9 @@ function LoginContent() {
     if (role !== "admin" && userDocData.role !== role) {
       const existingRole = userDocData.role === "recruiter" ? "Recruiter" : "Candidate";
       const attemptedRole = role === "recruiter" ? "Recruiter" : "Candidate";
+      // Sign out immediately so the session is not left active
+      await logout();
+      document.cookie = "session=; path=/; max-age=0";
       setLoginError(
         `This account is registered as a ${existingRole}. Please log in from the ${existingRole} login page, or use a different account to sign in as a ${attemptedRole}.`
       );
@@ -187,7 +190,7 @@ function LoginContent() {
       const user = await loginWithEmail(data.email, data.password);
       document.cookie = `session=${user.uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       const userDocData = await getUserDoc(user.uid);
-      redirectByRole(userDocData);
+      await redirectByRole(userDocData);
     } catch (error: unknown) {
       setLoginError(getFriendlyError(error));
     } finally {
@@ -202,7 +205,7 @@ function LoginContent() {
       const user = await loginWithGoogle();
       document.cookie = `session=${user.uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       const userDocData = await getUserDoc(user.uid);
-      redirectByRole(userDocData);
+      await redirectByRole(userDocData);
     } catch (error: unknown) {
       setLoginError(getFriendlyError(error));
     } finally {
