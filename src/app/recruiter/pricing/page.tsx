@@ -3,10 +3,9 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { getRecruiterCredits } from "@/lib/payments/credit-service";
-import { isManualMode, getPaymentProviderName } from "@/lib/payments/registry";
+import { getPaymentProviderName } from "@/lib/payments/registry";
 import { pricingPlans, PricingPlan } from "@/config/pricing";
 import { formatCurrency, cn } from "@/lib/utils";
-import { siteConfig } from "@/config/site";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +17,6 @@ import {
   Check,
   Loader2,
   Zap,
-  Mail,
 } from "lucide-react";
 
 export default function PricingPage() {
@@ -26,8 +24,6 @@ export default function PricingPage() {
   const [credits, setCredits] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [purchasingPlan, setPurchasingPlan] = useState<string | null>(null);
-
-  const manual = isManualMode();
 
   useEffect(() => {
     if (authLoading || !user) return;
@@ -48,11 +44,6 @@ export default function PricingPage() {
 
   async function handlePurchase(plan: PricingPlan) {
     if (!user) return;
-
-    if (manual) {
-      toast.info("Please contact the admin to purchase credits.");
-      return;
-    }
 
     setPurchasingPlan(plan.id);
 
@@ -184,28 +175,18 @@ export default function PricingPage() {
               </CardContent>
 
               <CardFooter>
-                {manual ? (
-                  <Button variant="outline" className="w-full" asChild>
-                    <a href={`mailto:${siteConfig.adminEmail}?subject=Credit Purchase: ${plan.name}`}>
-                      <Mail className="mr-2 h-4 w-4" /> Contact Admin
-                    </a>
-                  </Button>
-                ) : (
-                  <Button
-                    className="w-full"
-                    variant={plan.popular ? "default" : "outline"}
-                    disabled={isPurchasing}
-                    onClick={() => handlePurchase(plan)}
-                  >
-                    {isPurchasing ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...
-                      </>
-                    ) : (
-                      <>Buy Now</>
-                    )}
-                  </Button>
-                )}
+                <Button
+                  className="w-full"
+                  variant={plan.popular ? "default" : "outline"}
+                  disabled={isPurchasing}
+                  onClick={() => handlePurchase(plan)}
+                >
+                  {isPurchasing ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</>
+                  ) : (
+                    <>Buy Now</>
+                  )}
+                </Button>
               </CardFooter>
             </Card>
           );
@@ -213,7 +194,7 @@ export default function PricingPage() {
       </div>
 
       {/* Payment Provider Info */}
-      {!manual && (
+      {getPaymentProviderName() !== "manual" && (
         <p className="text-center text-xs text-muted-foreground">
           Secure payments via {getPaymentProviderName()}. Credits are added instantly after payment.
         </p>
