@@ -284,6 +284,8 @@ function LoginContent() {
                   placeholder="you@example.com"
                   className="pl-9"
                   disabled={isDisabled}
+                  readOnly
+                  onFocus={(e) => e.currentTarget.removeAttribute("readonly")}
                   {...register("email")}
                 />
               </div>
@@ -310,6 +312,8 @@ function LoginContent() {
                   placeholder="Enter your password"
                   className="pl-9"
                   disabled={isDisabled}
+                  readOnly
+                  onFocus={(e) => e.currentTarget.removeAttribute("readonly")}
                   {...register("password")}
                 />
               </div>

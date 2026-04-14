@@ -320,6 +320,8 @@ function RegisterForm({ role }: { role: "candidate" | "recruiter" }) {
                 type="email"
                 placeholder="you@example.com"
                 disabled={isDisabled}
+                readOnly
+                onFocus={(e) => e.currentTarget.removeAttribute("readonly")}
                 {...register("email")}
               />
               {errors.email && (
@@ -404,6 +406,8 @@ function RegisterForm({ role }: { role: "candidate" | "recruiter" }) {
                 type="password"
                 placeholder="At least 6 characters"
                 disabled={isDisabled}
+                readOnly
+                onFocus={(e) => e.currentTarget.removeAttribute("readonly")}
                 {...register("password")}
               />
               {errors.password && (
