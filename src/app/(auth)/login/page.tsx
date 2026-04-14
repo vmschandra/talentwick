@@ -291,6 +291,8 @@ function LoginContent() {
                   placeholder="you@example.com"
                   className="pl-9"
                   autoComplete="username"
+                  readOnly
+                  onMouseDown={(e) => { e.currentTarget.readOnly = false; }}
                   disabled={isDisabled}
                   {...register("email")}
                 />
@@ -318,6 +320,8 @@ function LoginContent() {
                   placeholder="Enter your password"
                   className="pl-9"
                   autoComplete="current-password"
+                  readOnly
+                  onMouseDown={(e) => { e.currentTarget.readOnly = false; }}
                   disabled={isDisabled}
                   {...register("password")}
                 />
