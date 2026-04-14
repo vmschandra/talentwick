@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -125,11 +125,18 @@ function LoginContent() {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
+
+  // Clear the form whenever the user switches between Candidate / Recruiter tabs
+  useEffect(() => {
+    reset({ email: "", password: "" });
+    setLoginError(null);
+  }, [role, reset]);
 
   // No role selected — show the role picker
   if (!role || !roleConfig[role]) {
