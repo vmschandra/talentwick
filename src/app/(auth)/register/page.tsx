@@ -319,9 +319,8 @@ function RegisterForm({ role }: { role: "candidate" | "recruiter" }) {
                 id="email"
                 type="email"
                 placeholder="you@example.com"
+                autoComplete="email"
                 disabled={isDisabled}
-                readOnly
-                onFocus={(e) => e.currentTarget.removeAttribute("readonly")}
                 {...register("email")}
               />
               {errors.email && (
@@ -405,9 +404,8 @@ function RegisterForm({ role }: { role: "candidate" | "recruiter" }) {
                 id="password"
                 type="password"
                 placeholder="At least 6 characters"
+                autoComplete="new-password"
                 disabled={isDisabled}
-                readOnly
-                onFocus={(e) => e.currentTarget.removeAttribute("readonly")}
                 {...register("password")}
               />
               {errors.password && (
