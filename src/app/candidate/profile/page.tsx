@@ -75,6 +75,84 @@ const blankEducation: Education = {
   endYear: undefined,
 };
 
+// ─── Date Picker Helpers ───────────────────────────────────
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+const CURRENT_YEAR = new Date().getFullYear();
+const YEARS = Array.from({ length: CURRENT_YEAR - 1969 + 2 }, (_, i) => CURRENT_YEAR + 1 - i);
+
+/** Month + Year picker that stores values as "YYYY-MM" strings. */
+function MonthYearPicker({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+}) {
+  const parts = value ? value.split("-") : [];
+  const selectedYear = parts[0] ? parseInt(parts[0]) : 0;
+  const selectedMonth = parts[1] ? parseInt(parts[1]) : 0;
+
+  function emit(y: number, m: number) {
+    if (y && m) onChange(`${y}-${String(m).padStart(2, "0")}`);
+    else if (y) onChange(`${y}-${String(selectedMonth || 1).padStart(2, "0")}`);
+    else if (m) onChange(`${selectedYear || CURRENT_YEAR}-${String(m).padStart(2, "0")}`);
+  }
+
+  return (
+    <div className="flex gap-2">
+      <Select value={selectedMonth ? String(selectedMonth) : ""} onValueChange={(m) => emit(selectedYear, parseInt(m))} disabled={disabled}>
+        <SelectTrigger className="flex-1">
+          <SelectValue placeholder="Month" />
+        </SelectTrigger>
+        <SelectContent>
+          {MONTHS.map((name, i) => (
+            <SelectItem key={i + 1} value={String(i + 1)}>{name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select value={selectedYear ? String(selectedYear) : ""} onValueChange={(y) => emit(parseInt(y), selectedMonth)} disabled={disabled}>
+        <SelectTrigger className="w-[105px]">
+          <SelectValue placeholder="Year" />
+        </SelectTrigger>
+        <SelectContent>
+          {YEARS.map((y) => (
+            <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+/** Year-only picker (for education). */
+function YearPicker({
+  value,
+  onChange,
+  placeholder = "Year",
+}: {
+  value: number | undefined;
+  onChange: (v: number | undefined) => void;
+  placeholder?: string;
+}) {
+  return (
+    <Select value={value ? String(value) : ""} onValueChange={(v) => onChange(v ? parseInt(v) : undefined)}>
+      <SelectTrigger>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {YEARS.map((y) => (
+          <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 // ─── Skeleton ──────────────────────────────────────────────
 function ProfileSkeleton() {
   return (
@@ -566,18 +644,16 @@ export default function CandidateProfilePage() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label>Start Date</Label>
-                      <Input
-                        type="month"
+                      <MonthYearPicker
                         value={exp.startDate}
-                        onChange={(e) => updateExperience(index, "startDate", e.target.value)}
+                        onChange={(v) => updateExperience(index, "startDate", v)}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label>End Date</Label>
-                      <Input
-                        type="month"
+                      <MonthYearPicker
                         value={exp.current ? "" : exp.endDate || ""}
-                        onChange={(e) => updateExperience(index, "endDate", e.target.value)}
+                        onChange={(v) => updateExperience(index, "endDate", v)}
                         disabled={exp.current}
                       />
                     </div>
@@ -689,30 +765,17 @@ export default function CandidateProfilePage() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label>Start Year</Label>
-                      <Input
-                        type="number"
-                        min={1970}
-                        max={2030}
-                        value={edu.startYear}
-                        onChange={(e) =>
-                          updateEducation(index, "startYear", parseInt(e.target.value) || 0)
-                        }
+                      <YearPicker
+                        value={edu.startYear || undefined}
+                        onChange={(v) => updateEducation(index, "startYear", v ?? 0)}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>End Year (leave blank if ongoing)</Label>
-                      <Input
-                        type="number"
-                        min={1970}
-                        max={2030}
-                        value={edu.endYear ?? ""}
-                        onChange={(e) =>
-                          updateEducation(
-                            index,
-                            "endYear",
-                            e.target.value ? parseInt(e.target.value) : undefined
-                          )
-                        }
+                      <Label>End Year</Label>
+                      <YearPicker
+                        value={edu.endYear}
+                        onChange={(v) => updateEducation(index, "endYear", v)}
+                        placeholder="Ongoing"
                       />
                     </div>
                   </div>
