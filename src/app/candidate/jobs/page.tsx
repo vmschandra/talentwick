@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/context/AuthContext";
 import { useJobSearch } from "@/hooks/useJobs";
 import { JobFilters } from "@/types";
 import SearchBar from "@/components/shared/SearchBar";

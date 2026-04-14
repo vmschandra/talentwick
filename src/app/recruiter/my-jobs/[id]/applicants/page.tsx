@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/context/AuthContext";
 import { getJob, getJobApplications, updateApplicationStatus } from "@/lib/firebase/firestore";
 import { Job, Application, ApplicationStatus } from "@/types";
 import { toast } from "sonner";

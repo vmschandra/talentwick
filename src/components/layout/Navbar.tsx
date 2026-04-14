@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/context/AuthContext";
 import { logout } from "@/lib/firebase/auth";
 import { getUserNotifications, markNotificationRead } from "@/lib/firebase/firestore";
 import { Notification } from "@/types";

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/context/AuthContext";
 import { getRecruiterJobs, updateJob, deleteJob } from "@/lib/firebase/firestore";
 import { Job, JobStatus } from "@/types";
 import { timeAgo } from "@/lib/utils";

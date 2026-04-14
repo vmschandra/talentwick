@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/context/AuthContext";
 import { getCandidateProfile, saveCandidateProfile } from "@/lib/firebase/firestore";
 import { calculateProfileCompleteness } from "@/lib/utils";
 import { CandidateProfile, Experience, Education, JobType } from "@/types";
@@ -111,7 +111,7 @@ export default function CandidateProfilePage() {
     watch,
     formState: { errors },
   } = useForm<BasicInfoFormValues>({
-    resolver: zodResolver(basicInfoSchema) as any,
+    resolver: zodResolver(basicInfoSchema),
     defaultValues: {
       firstName: "",
       lastName: "",

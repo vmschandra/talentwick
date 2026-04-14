@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { siteConfig } from "@/config/site";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/context/AuthContext";
 import { Briefcase, Users, CreditCard, Search, ArrowRight, Building, TrendingUp, UserCircle, LayoutDashboard } from "lucide-react";
 
 const stats = [

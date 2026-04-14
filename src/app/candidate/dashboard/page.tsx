@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/context/AuthContext";
 import { getCandidateProfile, searchJobs } from "@/lib/firebase/firestore";
 import { CandidateProfile, Job } from "@/types";
 import JobCard from "@/components/cards/JobCard";
