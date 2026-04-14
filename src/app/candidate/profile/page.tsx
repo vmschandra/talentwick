@@ -180,7 +180,7 @@ export default function CandidateProfilePage() {
         if (userDoc?.phone) {
           setValue("phone", userDoc.phone);
         }
-      } catch (error) {
+      } catch {
         toast.error("Failed to load profile data.");
       } finally {
         setLoading(false);
@@ -277,7 +277,7 @@ export default function CandidateProfilePage() {
       await updateDoc(doc(db, "users", user.uid), userUpdates);
 
       toast.success("Profile saved successfully!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to save profile. Please try again.");
     } finally {
       setSaving(false);

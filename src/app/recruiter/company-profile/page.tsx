@@ -114,7 +114,7 @@ export default function CompanyProfilePage() {
           });
           setLogoURL(profile.companyLogo);
         }
-      } catch (error) {
+      } catch {
         toast.error("Failed to load company profile");
       } finally {
         setLoading(false);
@@ -144,7 +144,7 @@ export default function CompanyProfilePage() {
       setLogoURL(url);
       await saveRecruiterProfile(user.uid, { companyLogo: url });
       toast.success("Logo uploaded successfully");
-    } catch (error) {
+    } catch {
       toast.error("Failed to upload logo");
     } finally {
       setUploading(false);
@@ -181,7 +181,7 @@ export default function CompanyProfilePage() {
       if (wasOnboarding) {
         router.push("/recruiter/dashboard");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to save profile");
     } finally {
       setSaving(false);

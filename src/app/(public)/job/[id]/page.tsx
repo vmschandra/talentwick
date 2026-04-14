@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { toast } from "sonner";
 import {
   MapPin,
@@ -382,9 +383,11 @@ export default function JobDetailPage() {
               <div className="flex items-start gap-4">
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-xl">
                   {job.companyLogo ? (
-                    <img
+                    <Image
                       src={job.companyLogo}
                       alt={job.companyName}
+                      width={56}
+                      height={56}
                       className="h-14 w-14 rounded-lg object-cover"
                     />
                   ) : (
@@ -614,9 +617,11 @@ export default function JobDetailPage() {
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary font-semibold">
                   {job.companyLogo ? (
-                    <img
+                    <Image
                       src={job.companyLogo}
                       alt={job.companyName}
+                      width={40}
+                      height={40}
                       className="h-10 w-10 rounded-lg object-cover"
                     />
                   ) : (

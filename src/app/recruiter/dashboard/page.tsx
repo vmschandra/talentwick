@@ -11,7 +11,8 @@ import { CandidateProfile, Job } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkles, Users, MapPin } from "lucide-react";
+import Link from "next/link";
+import { Sparkles, Users, MapPin, Building2, ArrowRight } from "lucide-react";
 
 interface ScoredCandidate extends CandidateProfile {
   matchScore: number;
@@ -40,11 +41,6 @@ export default function RecruiterHomePage() {
 
     if (!user || !userDoc) {
       router.push("/login");
-      return;
-    }
-
-    if (!userDoc.onboardingComplete) {
-      router.push("/recruiter/company-profile");
       return;
     }
 
@@ -89,6 +85,21 @@ export default function RecruiterHomePage() {
 
   return (
     <div className="space-y-6">
+      {!userDoc.onboardingComplete && (
+        <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm dark:border-amber-800 dark:bg-amber-950">
+          <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+            <Building2 className="h-4 w-4 shrink-0" />
+            <span>Complete your company profile to start posting jobs and attract candidates.</span>
+          </div>
+          <Link
+            href="/recruiter/company-profile"
+            className="ml-4 flex shrink-0 items-center gap-1 font-medium text-amber-900 hover:underline dark:text-amber-100"
+          >
+            Set up now <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      )}
+
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Candidates</h1>
         <p className="mt-1 text-muted-foreground">

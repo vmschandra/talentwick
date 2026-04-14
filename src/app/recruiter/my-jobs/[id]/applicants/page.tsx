@@ -67,7 +67,7 @@ export default function ApplicantsPage() {
 
         setJob(jobData);
         setApplications(appData);
-      } catch (error) {
+      } catch {
         toast.error("Failed to load applicant data");
       } finally {
         setLoading(false);
@@ -87,7 +87,7 @@ export default function ApplicantsPage() {
         prev.map((a) => (a.id === applicationId ? { ...a, status: newStatus } : a))
       );
       toast.success(`Status updated to "${newStatus}"`);
-    } catch (error) {
+    } catch {
       toast.error("Failed to update applicant status");
     }
   }

@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Search,
   MapPin,
@@ -65,9 +66,11 @@ function JobCard({ job }: { job: Job }) {
             {/* Company logo or fallback */}
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-lg">
               {job.companyLogo ? (
-                <img
+                <Image
                   src={job.companyLogo}
                   alt={job.companyName}
+                  width={48}
+                  height={48}
                   className="h-12 w-12 rounded-lg object-cover"
                 />
               ) : (

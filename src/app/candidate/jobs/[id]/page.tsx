@@ -17,7 +17,6 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -113,7 +112,7 @@ export default function JobDetailPage() {
         incrementJobView(jobId).catch(() => {
           // Non-critical, ignore errors
         });
-      } catch (error) {
+      } catch {
         toast.error("Failed to load job details.");
       } finally {
         setLoading(false);
