@@ -78,7 +78,7 @@ export default function ApplicationsPage() {
       ) : (
         <div className="space-y-4">
           {applications.map((app) => (
-            <Card key={app.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push(`/job/${app.jobId}`)}>
+            <Card key={app.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push(`/candidate/jobs/${app.jobId}`)}>
               <CardContent className="flex flex-col gap-2 p-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex-1">
                   <h3 className="font-semibold">{app.jobTitle || "Unknown Job"}</h3>

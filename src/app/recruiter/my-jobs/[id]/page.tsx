@@ -78,7 +78,10 @@ const editJobSchema = z.object({
   salaryPeriod: z.enum(["yearly", "monthly", "hourly"]).default("yearly"),
   benefits: z.array(z.object({ value: z.string() })).optional(),
   applicationDeadline: z.string().optional(),
-});
+}).refine(
+  (d) => !d.salaryMin || !d.salaryMax || d.salaryMax >= d.salaryMin,
+  { message: "Max salary must be greater than or equal to min salary", path: ["salaryMax"] }
+);
 
 type EditJobFormData = z.infer<typeof editJobSchema>;
 
@@ -229,6 +232,14 @@ export default function EditJobPage() {
 
   async function onSubmit(data: EditJobFormData) {
     if (!job) return;
+
+    // Flush any skill typed in the input but not yet confirmed with Enter.
+    const pendingSkill = skillInput.trim();
+    const finalSkills =
+      pendingSkill && !skillTags.includes(pendingSkill)
+        ? [...skillTags, pendingSkill]
+        : skillTags;
+
     setSaving(true);
 
     try {
@@ -251,7 +262,7 @@ export default function EditJobPage() {
         description: data.description,
         requirements: data.requirements.map((r) => r.value).filter(Boolean),
         responsibilities: data.responsibilities.map((r) => r.value).filter(Boolean),
-        skills: skillTags,
+        skills: finalSkills,
         location: data.location,
         jobType: data.jobType,
         workMode: data.workMode,

@@ -79,6 +79,11 @@ service cloud.firestore {
         ) ||
         isAdmin()
       );
+
+      // Recruiter (job owner) or admin may delete — needed for job cleanup
+      allow delete: if isSignedIn() && (
+        request.auth.uid == resource.data.recruiterId || isAdmin()
+      );
     }
 
     // ── Transactions ──────────────────────────────────────────────────────

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { getRecruiterCredits } from "@/lib/payments/credit-service";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,7 +28,8 @@ export default function PurchaseSuccessPage() {
       try {
         const c = await getRecruiterCredits(user!.uid);
         setCredits(c);
-      } catch (error) {
+      } catch {
+        toast.error("Failed to load credit balance. Please refresh.");
       } finally {
         setLoading(false);
       }

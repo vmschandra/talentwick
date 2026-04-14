@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getAllUsers, getAllJobs, getAllTransactions } from "@/lib/firebase/firestore";
+import { toast } from "sonner";
 import StatsCard from "@/components/cards/StatsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,7 +53,8 @@ export default function AdminDashboardPage() {
           });
         });
         setRecentActivity(activity);
-      } catch (err) {
+      } catch {
+        toast.error("Failed to load dashboard data. Please refresh.");
       } finally {
         setLoading(false);
       }

@@ -7,6 +7,7 @@ import {
   getDocs,
   updateDoc,
   deleteDoc,
+  writeBatch,
   query,
   where,
   orderBy,
@@ -105,7 +106,15 @@ export async function updateJob(jobId: string, data: Partial<Job>): Promise<void
 }
 
 export async function deleteJob(jobId: string): Promise<void> {
-  await deleteDoc(doc(db, "jobs", jobId));
+  // Atomically delete the job and all its applications in one batch so
+  // candidates don't see orphaned "Unknown Job" entries in their history.
+  const appSnap = await getDocs(
+    query(collection(db, "applications"), where("jobId", "==", jobId))
+  );
+  const batch = writeBatch(db);
+  batch.delete(doc(db, "jobs", jobId));
+  appSnap.docs.forEach((d) => batch.delete(d.ref));
+  await batch.commit();
 }
 
 export async function searchJobs(
@@ -140,6 +149,11 @@ export async function searchJobs(
 
   const q = query(collection(db, "jobs"), ...constraints);
   const snapshot = await getDocs(q);
+
+  // Index snapshot docs by job ID so we can find the correct pagination cursor
+  // after client-side filtering (the old code used the last Firestore doc which
+  // could skip valid results when filters removed docs from the middle).
+  const docsById = new Map(snapshot.docs.map((d) => [d.id, d]));
   let jobs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Job));
 
   // Filter out expired jobs (expiresAt enforced server-side in a future Cloud Function)
@@ -170,9 +184,16 @@ export async function searchJobs(
   // Trim to requested page size after client filtering
   const pagedJobs = jobs.slice(0, pageSize);
 
+  // Use the Firestore doc of the last returned job as the cursor so the next
+  // page starts from the right position even after client-side filtering.
+  const lastPagedDoc =
+    pagedJobs.length > 0
+      ? (docsById.get(pagedJobs[pagedJobs.length - 1].id) ?? null)
+      : null;
+
   return {
     jobs: pagedJobs,
-    lastDoc: snapshot.docs[snapshot.docs.length - 1] ?? null,
+    lastDoc: lastPagedDoc,
   };
 }
 
@@ -236,22 +257,17 @@ export async function applyToJob(data: {
   resumeURL: string;
   coverLetter?: string;
 }): Promise<string> {
-  // Check for duplicate application
-  const existing = await getDocs(
-    query(
-      collection(db, "applications"),
-      where("jobId", "==", data.jobId),
-      where("candidateId", "==", data.candidateId)
-    )
-  );
-  if (!existing.empty) throw new Error("You have already applied to this job");
-
-  const appRef = doc(collection(db, "applications"));
+  // Use a deterministic document ID so the duplicate check can run inside the
+  // transaction via transaction.get() — this closes the race window where two
+  // simultaneous submits could both pass a pre-transaction getDocs() check.
+  const appId = `${data.jobId}_${data.candidateId}`;
+  const appRef = doc(db, "applications", appId);
   const jobRef = doc(db, "jobs", data.jobId);
 
-  // Create application and increment applicant count atomically so the
-  // count never drifts if one of the two writes fails.
   await runTransaction(db, async (transaction) => {
+    const existing = await transaction.get(appRef);
+    if (existing.exists()) throw new Error("You have already applied to this job");
+
     transaction.set(appRef, {
       ...data,
       status: "pending",
@@ -270,18 +286,13 @@ export async function applyToJob(data: {
     `/recruiter/my-jobs/${data.jobId}/applicants`
   );
 
-  return appRef.id;
+  return appId;
 }
 
 export async function hasApplied(jobId: string, candidateId: string): Promise<boolean> {
   if (!firebaseConfigured) return false;
-  const q = query(
-    collection(db, "applications"),
-    where("jobId", "==", jobId),
-    where("candidateId", "==", candidateId)
-  );
-  const snap = await getDocs(q);
-  return !snap.empty;
+  const snap = await getDoc(doc(db, "applications", `${jobId}_${candidateId}`));
+  return snap.exists();
 }
 
 export async function getCandidateApplications(candidateId: string): Promise<Application[]> {

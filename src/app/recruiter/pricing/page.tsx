@@ -6,6 +6,7 @@ import { getRecruiterCredits } from "@/lib/payments/credit-service";
 import { isManualMode, getPaymentProviderName } from "@/lib/payments/registry";
 import { pricingPlans, PricingPlan } from "@/config/pricing";
 import { formatCurrency, cn } from "@/lib/utils";
+import { siteConfig } from "@/config/site";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -185,7 +186,7 @@ export default function PricingPage() {
               <CardFooter>
                 {manual ? (
                   <Button variant="outline" className="w-full" asChild>
-                    <a href={`mailto:admin@talentwick.com?subject=Credit Purchase: ${plan.name}`}>
+                    <a href={`mailto:${siteConfig.adminEmail}?subject=Credit Purchase: ${plan.name}`}>
                       <Mail className="mr-2 h-4 w-4" /> Contact Admin
                     </a>
                   </Button>

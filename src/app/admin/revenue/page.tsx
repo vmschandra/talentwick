@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getAllTransactions } from "@/lib/firebase/firestore";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,7 +29,7 @@ export default function AdminRevenuePage() {
   useEffect(() => {
     getAllTransactions()
       .then((data) => setTransactions(data as TransactionRow[]))
-      .catch(() => {})
+      .catch(() => toast.error("Failed to load revenue data. Please refresh."))
       .finally(() => setLoading(false));
   }, []);
 
