@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { getRecruiterCredits } from "@/lib/payments/credit-service";
 import { getPaymentProviderName } from "@/lib/payments/registry";
@@ -21,6 +22,7 @@ import {
 
 export default function PricingPage() {
   const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [credits, setCredits] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [purchasingPlan, setPurchasingPlan] = useState<string | null>(null);
@@ -42,39 +44,10 @@ export default function PricingPage() {
     fetchCredits();
   }, [user, authLoading]);
 
-  async function handlePurchase(plan: PricingPlan) {
+  function handlePurchase(plan: PricingPlan) {
     if (!user) return;
-
     setPurchasingPlan(plan.id);
-
-    try {
-      const res = await fetch("/api/payments/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          planId: plan.id,
-          recruiterId: user.uid,
-          email: user.email,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Checkout failed");
-      }
-
-      if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-      } else {
-        throw new Error("No checkout URL returned");
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to start checkout";
-      toast.error(message);
-    } finally {
-      setPurchasingPlan(null);
-    }
+    router.push(`/recruiter/checkout/${plan.id}`);
   }
 
   if (authLoading || loading) {

@@ -138,6 +138,13 @@ function LoginContent() {
     setLoginError(null);
   }, [role, reset]);
 
+  // Auto-dismiss login errors after 5 seconds
+  useEffect(() => {
+    if (!loginError) return;
+    const t = setTimeout(() => setLoginError(null), 5000);
+    return () => clearTimeout(t);
+  }, [loginError]);
+
   // No role selected — show the role picker
   if (!role || !roleConfig[role]) {
     return <RolePicker />;
