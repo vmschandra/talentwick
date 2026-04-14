@@ -1,25 +1,106 @@
+import Stripe from "stripe";
 import { PaymentProvider, CreateCheckoutParams, CheckoutResult, WebhookEvent } from "../types";
 
-// Stub: Install `stripe` package and implement when ready.
-// Set NEXT_PUBLIC_PAYMENT_PROVIDER=stripe and add STRIPE_* env vars.
+function getClient(): Stripe {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error("STRIPE_SECRET_KEY is not set");
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2026-03-25.dahlia",
+  });
+}
 
 export const stripeProvider: PaymentProvider = {
   name: "stripe",
 
   async createCheckoutSession(params: CreateCheckoutParams): Promise<CheckoutResult> {
-    // TODO: Implement with Stripe SDK
-    // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-    // const session = await stripe.checkout.sessions.create({...});
-    // return { checkoutUrl: session.url!, sessionId: session.id };
-    throw new Error(
-      `Stripe provider not yet implemented. Plan: ${params.plan.id}. ` +
-      "Install stripe, then implement this file."
-    );
+    const stripe = getClient();
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      customer_email: params.customerEmail,
+      metadata: {
+        recruiterId: params.recruiterId,
+        planId: params.plan.id,
+        credits: String(params.plan.credits),
+      },
+      line_items: [
+        {
+          price_data: {
+            currency: params.plan.currency,
+            product_data: {
+              name: `${params.plan.name} Plan – TalentWick`,
+              description: `${params.plan.credits} job posting credit${params.plan.credits !== 1 ? "s" : ""} (30-day listing each)`,
+            },
+            unit_amount: params.plan.price, // already in cents
+          },
+          quantity: 1,
+        },
+      ],
+      success_url: params.successUrl,
+      cancel_url: params.cancelUrl,
+    });
+
+    return {
+      checkoutUrl: session.url!,
+      sessionId: session.id,
+    };
   },
 
-  async verifyWebhookSignature(_request: Request): Promise<WebhookEvent> {
-    // TODO: Implement webhook verification with Stripe
-    throw new Error("Stripe webhook verification not yet implemented.");
+  async verifyWebhookSignature(request: Request): Promise<WebhookEvent> {
+    const stripe = getClient();
+    const body = await request.text();
+    const signature = request.headers.get("stripe-signature");
+
+    if (!signature) throw new Error("Missing Stripe-Signature header");
+
+    const event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
+
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const { recruiterId, planId, credits } = session.metadata ?? {};
+
+      if (!recruiterId || !planId || !credits) {
+        throw new Error("Stripe session is missing required metadata fields");
+      }
+
+      return {
+        type: "payment.success",
+        sessionId: session.id,
+        recruiterId,
+        plan: planId,
+        credits: parseInt(credits, 10),
+        amount: session.amount_total ?? 0,
+        gatewayTransactionId:
+          typeof session.payment_intent === "string"
+            ? session.payment_intent
+            : (session.payment_intent as Stripe.PaymentIntent | null)?.id ?? session.id,
+        rawEvent: event,
+      };
+    }
+
+    // Payment failed / refunded — surface as failure so caller can handle
+    if (event.type === "checkout.session.expired" || event.type === "payment_intent.payment_failed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      return {
+        type: "payment.failed",
+        sessionId: session.id ?? "",
+        recruiterId: session.metadata?.recruiterId ?? "",
+        plan: session.metadata?.planId ?? "",
+        credits: 0,
+        amount: 0,
+        gatewayTransactionId: session.id ?? "",
+        rawEvent: event,
+      };
+    }
+
+    // Silently ignore other event types (e.g. payment_intent.created)
+    throw new Error(`Unhandled Stripe event: ${event.type}`);
   },
 
   isConfigured(): boolean {
