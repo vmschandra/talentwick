@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { getCandidateProfile, saveCandidateProfile } from "@/lib/firebase/firestore";
@@ -173,6 +173,8 @@ export default function CandidateProfilePage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [localDirty, setLocalDirty] = useState(false);
+  const profileLoadedRef = useRef(false);
   const [skills, setSkills] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState("");
   const [experiences, setExperiences] = useState<Experience[]>([]);
@@ -187,7 +189,8 @@ export default function CandidateProfilePage() {
     handleSubmit,
     setValue,
     watch,
-    formState: { errors },
+    reset,
+    formState: { errors, isDirty },
   } = useForm<BasicInfoFormValues>({
     resolver: zodResolver(basicInfoSchema),
     defaultValues: {
@@ -231,11 +234,25 @@ export default function CandidateProfilePage() {
     async function loadProfile() {
       try {
         const existing = await getCandidateProfile(user!.uid);
+
+        // Split displayName into first/last
+        const displayName = userDoc?.displayName?.trim() || "";
+        const spaceIdx = displayName.indexOf(" ");
+        const firstName = spaceIdx === -1 ? displayName : displayName.slice(0, spaceIdx);
+        const lastName = spaceIdx === -1 ? "" : displayName.slice(spaceIdx + 1);
+
+        // Reset with loaded values so RHF's baseline matches saved data (isDirty = false)
+        reset({
+          firstName,
+          lastName,
+          headline: existing?.headline || "",
+          summary: existing?.summary || "",
+          location: existing?.location || "",
+          phone: userDoc?.phone || "",
+          preferredJobType: existing?.preferredJobType || "full-time",
+        });
+
         if (existing) {
-          setValue("headline", existing.headline || "");
-          setValue("summary", existing.summary || "");
-          setValue("location", existing.location || "");
-          setValue("preferredJobType", existing.preferredJobType || "full-time");
           setSkills(existing.skills || []);
           setExperiences(existing.experience || []);
           setEducations(existing.education || []);
@@ -243,30 +260,21 @@ export default function CandidateProfilePage() {
           setResumeFileName(existing.resumeFileName);
           setOpenToWork(existing.openToWork ?? true);
         }
-        // Pre-fill first/last name by splitting displayName on first space
-        const displayName = userDoc?.displayName?.trim() || "";
-        if (displayName) {
-          const spaceIdx = displayName.indexOf(" ");
-          if (spaceIdx === -1) {
-            setValue("firstName", displayName);
-          } else {
-            setValue("firstName", displayName.slice(0, spaceIdx));
-            setValue("lastName", displayName.slice(spaceIdx + 1));
-          }
-        }
-        // Pre-fill phone from userDoc
-        if (userDoc?.phone) {
-          setValue("phone", userDoc.phone);
-        }
       } catch {
         toast.error("Failed to load profile data.");
       } finally {
         setLoading(false);
+        profileLoadedRef.current = true;
       }
     }
 
     loadProfile();
   }, [user, userDoc, authLoading, router, setValue]);
+
+  // ─── Dirty tracking for non-RHF state ────────────────────
+  const markLocalDirty = useCallback(() => {
+    if (profileLoadedRef.current) setLocalDirty(true);
+  }, []);
 
   // ─── Skills Handlers ─────────────────────────────────────
   const addSkill = () => {
@@ -274,11 +282,13 @@ export default function CandidateProfilePage() {
     if (trimmed && !skills.includes(trimmed) && skills.length < 30) {
       setSkills((prev) => [...prev, trimmed]);
       setSkillInput("");
+      markLocalDirty();
     }
   };
 
   const removeSkill = (skill: string) => {
     setSkills((prev) => prev.filter((s) => s !== skill));
+    markLocalDirty();
   };
 
   const handleSkillKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -291,31 +301,37 @@ export default function CandidateProfilePage() {
   // ─── Experience Handlers ─────────────────────────────────
   const addExperience = () => {
     setExperiences((prev) => [...prev, { ...blankExperience }]);
+    markLocalDirty();
   };
 
   const removeExperience = (index: number) => {
     setExperiences((prev) => prev.filter((_, i) => i !== index));
+    markLocalDirty();
   };
 
   const updateExperience = (index: number, field: keyof Experience, value: string | boolean) => {
     setExperiences((prev) =>
       prev.map((exp, i) => (i === index ? { ...exp, [field]: value } : exp))
     );
+    markLocalDirty();
   };
 
   // ─── Education Handlers ──────────────────────────────────
   const addEducation = () => {
     setEducations((prev) => [...prev, { ...blankEducation }]);
+    markLocalDirty();
   };
 
   const removeEducation = (index: number) => {
     setEducations((prev) => prev.filter((_, i) => i !== index));
+    markLocalDirty();
   };
 
   const updateEducation = (index: number, field: keyof Education, value: string | number | undefined) => {
     setEducations((prev) =>
       prev.map((edu, i) => (i === index ? { ...edu, [field]: value } : edu))
     );
+    markLocalDirty();
   };
 
   // ─── Save ────────────────────────────────────────────────
@@ -353,6 +369,10 @@ export default function CandidateProfilePage() {
         userUpdates.onboardingComplete = true;
       }
       await updateDoc(doc(db, "users", user.uid), userUpdates);
+
+      // Reset dirty state so the Save button fades out until the next change
+      reset(formData, { keepValues: true });
+      setLocalDirty(false);
 
       toast.success("Profile saved successfully!");
     } catch {
@@ -505,7 +525,7 @@ export default function CandidateProfilePage() {
                     type="button"
                     role="switch"
                     aria-checked={openToWork}
-                    onClick={() => setOpenToWork(!openToWork)}
+                    onClick={() => { setOpenToWork(!openToWork); markLocalDirty(); }}
                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                       openToWork ? "bg-primary" : "bg-input"
                     }`}
@@ -805,6 +825,7 @@ export default function CandidateProfilePage() {
               onUploaded={(url, fileName) => {
                 setResumeURL(url);
                 setResumeFileName(fileName);
+                markLocalDirty();
               }}
             />
           </CardContent>
@@ -812,7 +833,7 @@ export default function CandidateProfilePage() {
 
         {/* ─── Save Button ─────────────────────────────────── */}
         <div className="flex justify-end gap-3 pb-8">
-          <Button type="submit" disabled={saving} size="lg">
+          <Button type="submit" disabled={saving || (!isDirty && !localDirty)} size="lg">
             {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
