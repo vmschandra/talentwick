@@ -65,6 +65,8 @@ export interface RecruiterProfile {
   companyDescription?: string;
   location: string;
   designation?: string;
+  employeeId?: string;
+  workEmail?: string;
   jobPostCredits: number;
   totalCreditsUsed: number;
   totalSpent: number;
