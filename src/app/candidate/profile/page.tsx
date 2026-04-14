@@ -190,7 +190,7 @@ export default function CandidateProfilePage() {
     setValue,
     watch,
     reset,
-    formState: { errors, isDirty },
+    formState: { errors },
   } = useForm<BasicInfoFormValues>({
     resolver: zodResolver(basicInfoSchema),
     defaultValues: {
@@ -205,6 +205,14 @@ export default function CandidateProfilePage() {
   });
 
   const watchedValues = watch();
+
+  // Mark dirty whenever any RHF-managed field changes, but only after the
+  // profile has finished loading (prevents the initial reset() from triggering it).
+  const { firstName, lastName, headline, summary, location, phone, preferredJobType } = watchedValues;
+  useEffect(() => {
+    if (!profileLoadedRef.current) return;
+    setLocalDirty(true);
+  }, [firstName, lastName, headline, summary, location, phone, preferredJobType]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Recalculate completeness whenever relevant state changes
   const recalcCompleteness = useCallback(() => {
@@ -370,10 +378,7 @@ export default function CandidateProfilePage() {
       }
       await updateDoc(doc(db, "users", user.uid), userUpdates);
 
-      // Reset dirty state so the Save button fades out until the next change
-      reset(formData, { keepValues: true });
       setLocalDirty(false);
-
       toast.success("Profile saved successfully!");
     } catch {
       toast.error("Failed to save profile. Please try again.");
@@ -833,7 +838,7 @@ export default function CandidateProfilePage() {
 
         {/* ─── Save Button ─────────────────────────────────── */}
         <div className="flex justify-end gap-3 pb-8">
-          <Button type="submit" disabled={saving || (!isDirty && !localDirty)} size="lg">
+          <Button type="submit" disabled={saving || !localDirty} size="lg">
             {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
