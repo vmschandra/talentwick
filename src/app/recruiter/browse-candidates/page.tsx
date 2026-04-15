@@ -186,7 +186,7 @@ export default function BrowseCandidatesPage() {
                 <SelectValue placeholder="Country" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All countries</SelectItem>
+                <SelectItem value="all">Country</SelectItem>
                 {countryOptions.map((co) => (
                   <SelectItem key={co} value={co}>{co}</SelectItem>
                 ))}
@@ -204,7 +204,7 @@ export default function BrowseCandidatesPage() {
                 <SelectValue placeholder={country === "all" ? "Select country first" : "All cities"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All cities</SelectItem>
+                <SelectItem value="all">City</SelectItem>
                 {cityOptions.map((ci) => (
                   <SelectItem key={ci} value={ci}>{ci}</SelectItem>
                 ))}
@@ -217,7 +217,7 @@ export default function BrowseCandidatesPage() {
                 <SelectValue placeholder="Job type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All job types</SelectItem>
+                <SelectItem value="all">Job type</SelectItem>
                 <SelectItem value="full-time">Full-time</SelectItem>
                 <SelectItem value="part-time">Part-time</SelectItem>
                 <SelectItem value="contract">Contract</SelectItem>
