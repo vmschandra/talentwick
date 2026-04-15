@@ -10,6 +10,7 @@ import {
   PlusCircle,
   Briefcase,
   CreditCard,
+  Users,
 } from "lucide-react";
 
 const recruiterLinks = [
@@ -17,6 +18,7 @@ const recruiterLinks = [
   { href: "/recruiter/company-profile", label: "Company Profile", icon: <Building2 className="h-4 w-4" /> },
   { href: "/recruiter/post-job", label: "Post a Job", icon: <PlusCircle className="h-4 w-4" /> },
   { href: "/recruiter/my-jobs", label: "My Jobs", icon: <Briefcase className="h-4 w-4" /> },
+  { href: "/recruiter/browse-candidates", label: "Browse Candidates", icon: <Users className="h-4 w-4" /> },
   { href: "/recruiter/pricing", label: "Buy Credits", icon: <CreditCard className="h-4 w-4" /> },
 ];
 

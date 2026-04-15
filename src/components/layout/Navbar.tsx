@@ -65,9 +65,15 @@ export default function Navbar() {
 
         {/* Desktop links */}
         <div className="hidden items-center gap-6 md:flex">
-          <Link href="/browse-jobs" className="text-sm font-medium text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-            Browse Jobs
-          </Link>
+          {userDoc?.role === "recruiter" ? (
+            <Link href="/recruiter/browse-candidates" className="text-sm font-medium text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+              Browse Candidates
+            </Link>
+          ) : (
+            <Link href="/browse-jobs" className="text-sm font-medium text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+              Browse Jobs
+            </Link>
+          )}
           {!loading && (!user || !userDoc) && (
             <>
               <Link href="/login?role=candidate">
@@ -162,7 +168,11 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="border-t border-primary-foreground/20 bg-primary p-4 md:hidden">
           <div className="flex flex-col gap-3">
-            <Link href="/browse-jobs" className="text-sm font-medium text-primary-foreground" onClick={() => setMobileOpen(false)}>Browse Jobs</Link>
+            {userDoc?.role === "recruiter" ? (
+              <Link href="/recruiter/browse-candidates" className="text-sm font-medium text-primary-foreground" onClick={() => setMobileOpen(false)}>Browse Candidates</Link>
+            ) : (
+              <Link href="/browse-jobs" className="text-sm font-medium text-primary-foreground" onClick={() => setMobileOpen(false)}>Browse Jobs</Link>
+            )}
             {!loading && (!user || !userDoc) ? (
               <>
                 <Link href="/login?role=candidate" onClick={() => setMobileOpen(false)}><Button className="w-full bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25 border-0">Candidate Login</Button></Link>
