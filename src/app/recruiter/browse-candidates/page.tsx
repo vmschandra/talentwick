@@ -63,6 +63,17 @@ const JOB_TYPE_LABELS: Record<JobType, string> = {
   internship: "Internship",
 };
 
+// ─── Location parsing ─────────────────────────────────────────────────────────
+// Expects free-text like "Hyderabad", "SFO, USA", "London, UK"
+function parseLocation(raw: string): { city: string; country: string } {
+  if (!raw?.trim()) return { city: "", country: "" };
+  const parts = raw.split(",").map((s) => s.trim()).filter(Boolean);
+  if (parts.length >= 2) {
+    return { city: parts.slice(0, -1).join(", "), country: parts[parts.length - 1] };
+  }
+  return { city: parts[0], country: "" };
+}
+
 // ─── Merged candidate type ────────────────────────────────────────────────────
 interface Candidate extends CandidateProfile {
   displayName: string;
@@ -78,7 +89,8 @@ export default function BrowseCandidatesPage() {
   const [search, setSearch] = useState("");
   const [jobType, setJobType] = useState<string>("all");
   const [minExp, setMinExp] = useState<string>("0");
-  const [location, setLocation] = useState<string>("all");
+  const [country, setCountry] = useState<string>("all");
+  const [city, setCity] = useState<string>("all");
 
   useEffect(() => {
     async function load() {
@@ -103,18 +115,34 @@ export default function BrowseCandidatesPage() {
     load().catch(() => setLoading(false));
   }, []);
 
-  // Unique sorted locations derived from loaded candidates
-  const locationOptions = useMemo(() => {
+  // Unique countries and cities derived from loaded candidates
+  const countryOptions = useMemo(() => {
     const set = new Set<string>();
-    candidates.forEach((c) => { if (c.location?.trim()) set.add(c.location.trim()); });
+    candidates.forEach((c) => {
+      const { country: co } = parseLocation(c.location ?? "");
+      if (co) set.add(co);
+    });
     return Array.from(set).sort();
   }, [candidates]);
+
+  // Cities narrowed to selected country (or all cities when no country selected)
+  const cityOptions = useMemo(() => {
+    const set = new Set<string>();
+    candidates.forEach((c) => {
+      const { city: ci, country: co } = parseLocation(c.location ?? "");
+      if (!ci) return;
+      if (country === "all" || co === country) set.add(ci);
+    });
+    return Array.from(set).sort();
+  }, [candidates, country]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return candidates.filter((c) => {
       if (jobType !== "all" && c.preferredJobType !== jobType) return false;
-      if (location !== "all" && c.location?.trim() !== location) return false;
+      const { city: ci, country: co } = parseLocation(c.location ?? "");
+      if (country !== "all" && co !== country) return false;
+      if (city !== "all" && ci !== city) return false;
       const years = calcTotalYears(c.experience);
       if (years < Number(minExp)) return false;
       if (q) {
@@ -125,15 +153,16 @@ export default function BrowseCandidatesPage() {
       }
       return true;
     });
-  }, [candidates, search, jobType, minExp, location]);
+  }, [candidates, search, jobType, minExp, country, city]);
 
-  const hasFilters = search || jobType !== "all" || minExp !== "0" || location !== "all";
+  const hasFilters = search || jobType !== "all" || minExp !== "0" || country !== "all" || city !== "all";
 
   function clearFilters() {
     setSearch("");
     setJobType("all");
     setMinExp("0");
-    setLocation("all");
+    setCountry("all");
+    setCity("all");
   }
 
   return (
@@ -163,16 +192,32 @@ export default function BrowseCandidatesPage() {
               />
             </div>
 
-            {/* Location */}
-            <Select value={location} onValueChange={setLocation}>
-              <SelectTrigger className="w-44">
-                <MapPin className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />
-                <SelectValue placeholder="Location" />
+            {/* Country */}
+            <Select
+              value={country}
+              onValueChange={(val) => { setCountry(val); setCity("all"); }}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Country" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All locations</SelectItem>
-                {locationOptions.map((loc) => (
-                  <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                <SelectItem value="all">All countries</SelectItem>
+                {countryOptions.map((co) => (
+                  <SelectItem key={co} value={co}>{co}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* City */}
+            <Select value={city} onValueChange={setCity}>
+              <SelectTrigger className="w-40">
+                <MapPin className="mr-1 h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <SelectValue placeholder="City" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All cities</SelectItem>
+                {cityOptions.map((ci) => (
+                  <SelectItem key={ci} value={ci}>{ci}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
