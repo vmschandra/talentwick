@@ -8,8 +8,8 @@ import {
   getRecruiterJobs,
   getAllCandidateProfiles,
   getRecruiterApplications,
-  getRecruiterCredits,
 } from "@/lib/firebase/firestore";
+import { getRecruiterCredits } from "@/lib/payments/credit-service";
 import { CandidateProfile, Job, Application } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

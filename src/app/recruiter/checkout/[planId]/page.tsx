@@ -27,7 +27,7 @@ const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   : null;
 
 // ─── Inner payment form (must live inside <Elements>) ─────────────────────────
-function PaymentForm({ plan, onSuccess }: { plan: PricingPlan; onSuccess: () => void }) {
+function PaymentForm({ plan }: { plan: PricingPlan }) {
   const stripe = useStripe();
   const elements = useElements();
   const [processing, setProcessing] = useState(false);
@@ -223,7 +223,7 @@ export default function CheckoutPage() {
             >
               <PaymentForm
                 plan={plan}
-                onSuccess={() => router.push("/recruiter/purchase/success")}
+
               />
             </Elements>
           )}
