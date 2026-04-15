@@ -32,6 +32,28 @@ import {
 } from "lucide-react";
 import { siteConfig } from "@/config/site";
 
+// ── Shared button class — all right-side nav buttons use this exactly ─────────
+const NAV_BTN =
+  "relative flex flex-col items-center gap-0.5 rounded-md px-3 py-2 text-primary-foreground/80 transition-colors hover:bg-primary-foreground/15 hover:text-primary-foreground focus:outline-none";
+
+// ── Icon + label button (Help, Messages, etc.) ────────────────────────────────
+function NavIconButton({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button onClick={onClick} className={NAV_BTN}>
+      <span className="flex h-5 w-5 items-center justify-center">{icon}</span>
+      <span className="text-[11px] font-medium leading-none">{label}</span>
+    </button>
+  );
+}
+
 export default function Navbar() {
   const { user, userDoc, loading } = useAuth();
   const router = useRouter();
@@ -74,10 +96,14 @@ export default function Navbar() {
       .slice(0, 2) || "U";
 
   const isRecruiter = userDoc?.role === "recruiter";
+  const isCandidate = userDoc?.role === "candidate";
+
+  // Role-specific deep links
+  const helpPath = isRecruiter ? "/recruiter/help" : "/candidate/help";
+  const messagesPath = isRecruiter ? "/recruiter/messages" : "/candidate/messages";
 
   return (
     <header className="sticky top-0 z-50 w-full bg-primary text-primary-foreground">
-      {/* Full-width nav: brand extreme left, actions extreme right */}
       <nav className="flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
 
         {/* ── Brand (extreme left) ── */}
@@ -92,7 +118,7 @@ export default function Navbar() {
         {/* ── Right-side actions (extreme right) ── */}
         <div className="hidden md:flex items-center">
 
-          {/* Logged-out: Browse Jobs + login buttons */}
+          {/* Logged-out */}
           {!loading && (!user || !userDoc) && (
             <div className="flex items-center gap-3">
               <Link
@@ -119,44 +145,46 @@ export default function Navbar() {
 
           {/* Logged-in */}
           {!loading && user && userDoc && (
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center">
 
-              {/* Candidate / Admin: Browse Jobs text link */}
-              {!isRecruiter && (
+              {/* Candidate: Browse Jobs text link */}
+              {isCandidate && (
                 <Link
-                  href="/browse-jobs"
-                  className="mr-4 text-sm font-medium text-primary-foreground/80 hover:text-primary-foreground transition-colors"
+                  href="/candidate/jobs"
+                  className="mr-2 text-sm font-medium text-primary-foreground/80 hover:text-primary-foreground transition-colors px-2"
                 >
                   Browse Jobs
                 </Link>
               )}
 
-              {/* Recruiter-only: Help */}
-              {isRecruiter && (
+              {/* Help — recruiters and candidates */}
+              {(isRecruiter || isCandidate) && (
                 <NavIconButton
-                  icon={<HelpCircle className="h-4 w-4" />}
+                  icon={<HelpCircle className="h-5 w-5" />}
                   label="Help"
-                  onClick={() => router.push("/recruiter/help")}
+                  onClick={() => router.push(helpPath)}
                 />
               )}
 
-              {/* Recruiter-only: Messages */}
-              {isRecruiter && (
+              {/* Messages — recruiters and candidates */}
+              {(isRecruiter || isCandidate) && (
                 <NavIconButton
-                  icon={<MessageSquare className="h-4 w-4" />}
+                  icon={<MessageSquare className="h-5 w-5" />}
                   label="Messages"
-                  onClick={() => router.push("/recruiter/messages")}
+                  onClick={() => router.push(messagesPath)}
                 />
               )}
 
-              {/* Notifications (all roles) */}
+              {/* Notifications — all roles */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="relative flex flex-col items-center gap-0.5 rounded-md px-3 py-1.5 text-primary-foreground/80 transition-colors hover:bg-primary-foreground/15 hover:text-primary-foreground focus:outline-none">
-                    <Bell className="h-4 w-4" />
-                    <span className="text-[10px] leading-none">Notifications</span>
+                  <button className={NAV_BTN}>
+                    <span className="flex h-5 w-5 items-center justify-center">
+                      <Bell className="h-5 w-5" />
+                    </span>
+                    <span className="text-[11px] font-medium leading-none">Notifications</span>
                     {unreadCount > 0 && (
-                      <span className="absolute right-2 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-white">
+                      <span className="absolute right-1.5 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
                         {unreadCount}
                       </span>
                     )}
@@ -184,16 +212,18 @@ export default function Navbar() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Profile avatar (all roles) */}
+              {/* Profile — all roles */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex flex-col items-center gap-0.5 rounded-md px-3 py-1.5 text-primary-foreground/80 transition-colors hover:bg-primary-foreground/15 hover:text-primary-foreground focus:outline-none">
-                    <Avatar className="h-5 w-5">
-                      <AvatarFallback className="bg-primary-foreground text-primary text-[9px]">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-[10px] leading-none max-w-[56px] truncate">
+                  <button className={NAV_BTN}>
+                    <span className="flex h-5 w-5 items-center justify-center">
+                      <Avatar className="h-5 w-5">
+                        <AvatarFallback className="bg-primary-foreground text-primary text-[9px] font-bold">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                    </span>
+                    <span className="text-[11px] font-medium leading-none max-w-[56px] truncate">
                       {userDoc.displayName?.split(" ")[0] ?? "Profile"}
                     </span>
                   </button>
@@ -248,23 +278,20 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="border-t border-primary-foreground/20 bg-primary p-4 md:hidden">
           <div className="flex flex-col gap-3">
-            {!isRecruiter && (
-              <Link
-                href="/browse-jobs"
-                className="text-sm font-medium text-primary-foreground"
-                onClick={() => setMobileOpen(false)}
-              >
+            {isCandidate && (
+              <Link href="/candidate/jobs" className="text-sm font-medium text-primary-foreground" onClick={() => setMobileOpen(false)}>
                 Browse Jobs
               </Link>
             )}
-            {isRecruiter && (
+            {(isRecruiter || isCandidate) && (
               <>
-                <Link href="/recruiter/help" className="text-sm font-medium text-primary-foreground" onClick={() => setMobileOpen(false)}>Help</Link>
-                <Link href="/recruiter/messages" className="text-sm font-medium text-primary-foreground" onClick={() => setMobileOpen(false)}>Messages</Link>
+                <Link href={helpPath} className="text-sm font-medium text-primary-foreground" onClick={() => setMobileOpen(false)}>Help</Link>
+                <Link href={messagesPath} className="text-sm font-medium text-primary-foreground" onClick={() => setMobileOpen(false)}>Messages</Link>
               </>
             )}
             {!loading && (!user || !userDoc) ? (
               <>
+                <Link href="/browse-jobs" className="text-sm font-medium text-primary-foreground" onClick={() => setMobileOpen(false)}>Browse Jobs</Link>
                 <Link href="/login?role=candidate" onClick={() => setMobileOpen(false)}>
                   <Button className="w-full bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25 border-0">
                     Candidate Login
@@ -276,17 +303,10 @@ export default function Navbar() {
               </>
             ) : !loading && user && userDoc ? (
               <>
-                <Link
-                  href={dashboardPath}
-                  className="text-sm font-medium text-primary-foreground"
-                  onClick={() => setMobileOpen(false)}
-                >
+                <Link href={dashboardPath} className="text-sm font-medium text-primary-foreground" onClick={() => setMobileOpen(false)}>
                   Dashboard
                 </Link>
-                <button
-                  onClick={handleLogout}
-                  className="text-sm font-medium text-red-300 text-left"
-                >
+                <button onClick={handleLogout} className="text-sm font-medium text-red-300 text-left">
                   Log out
                 </button>
               </>
@@ -295,26 +315,5 @@ export default function Navbar() {
         </div>
       )}
     </header>
-  );
-}
-
-// ── Small helper: icon + label button ─────────────────────────────────────────
-function NavIconButton({
-  icon,
-  label,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex flex-col items-center gap-0.5 rounded-md px-3 py-1.5 text-primary-foreground/80 transition-colors hover:bg-primary-foreground/15 hover:text-primary-foreground focus:outline-none"
-    >
-      {icon}
-      <span className="text-[10px] leading-none">{label}</span>
-    </button>
   );
 }
