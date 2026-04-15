@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { getCandidateProfile, saveCandidateProfile } from "@/lib/firebase/firestore";
-import { calculateProfileCompleteness } from "@/lib/utils";
+import { calculateProfileCompleteness, parseLocation } from "@/lib/utils";
+import { WORLD_LOCATIONS } from "@/lib/data/locations";
 import { CandidateProfile, Experience, Education, JobType } from "@/types";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
@@ -42,6 +43,9 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+
+// ─── World location data ────────────────────────────────────
+const COUNTRIES = Object.keys(WORLD_LOCATIONS).sort();
 
 // ─── Schema ────────────────────────────────────────────────
 const basicInfoSchema = z.object({
@@ -153,6 +157,87 @@ function YearPicker({
   );
 }
 
+// ─── Searchable dropdown ───────────────────────────────────
+function SearchableSelect({
+  value,
+  onChange,
+  options,
+  placeholder,
+  disabled = false,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  placeholder: string;
+  disabled?: boolean;
+}) {
+  const [inputText, setInputText] = useState(value);
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  // Keep display text in sync when external value changes
+  useEffect(() => { setInputText(value); }, [value]);
+
+  const filtered = useMemo(() => {
+    if (!inputText.trim()) return options;
+    const q = inputText.toLowerCase();
+    return options.filter((o) => o.toLowerCase().includes(q));
+  }, [inputText, options]);
+
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setInputText(value); // restore selected value on outside-click
+      }
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [value]);
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <Input
+        value={inputText}
+        onChange={(e) => { setInputText(e.target.value); setOpen(true); }}
+        onFocus={() => { setInputText(""); setOpen(true); }}
+        placeholder={placeholder}
+        disabled={disabled}
+        className={value ? "pr-7" : ""}
+        autoComplete="off"
+      />
+      {value && !disabled && (
+        <button
+          type="button"
+          onClick={() => { onChange(""); setInputText(""); setOpen(false); }}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          tabIndex={-1}
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
+      {open && filtered.length > 0 && (
+        <ul className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-popover shadow-md">
+          {filtered.slice(0, 100).map((opt) => (
+            <li
+              key={opt}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                onChange(opt);
+                setInputText(opt);
+                setOpen(false);
+              }}
+              className="cursor-pointer px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+            >
+              {opt}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 // ─── Skeleton ──────────────────────────────────────────────
 function ProfileSkeleton() {
   return (
@@ -182,6 +267,8 @@ export default function CandidateProfilePage() {
   const [resumeURL, setResumeURL] = useState<string | undefined>();
   const [resumeFileName, setResumeFileName] = useState<string | undefined>();
   const [openToWork, setOpenToWork] = useState(true);
+  const [locationCountry, setLocationCountry] = useState("");
+  const [locationCity, setLocationCity] = useState("");
   const [profileCompleteness, setProfileCompleteness] = useState(0);
 
   const {
@@ -267,6 +354,18 @@ export default function CandidateProfilePage() {
           setResumeURL(existing.resumeURL);
           setResumeFileName(existing.resumeFileName);
           setOpenToWork(existing.openToWork ?? true);
+
+          // Parse stored "City, Country" into the two dropdowns
+          const raw = existing.location || "";
+          const { city, country } = parseLocation(raw);
+          // Handle edge case where only a country name was stored (no comma)
+          if (!country && COUNTRIES.includes(city)) {
+            setLocationCountry(city);
+            setLocationCity("");
+          } else {
+            setLocationCountry(country);
+            setLocationCity(city);
+          }
         }
       } catch {
         toast.error("Failed to load profile data.");
@@ -283,6 +382,23 @@ export default function CandidateProfilePage() {
   const markLocalDirty = useCallback(() => {
     if (profileLoadedRef.current) setLocalDirty(true);
   }, []);
+
+  // ─── Location Handlers ───────────────────────────────────
+  const handleCountryChange = (country: string) => {
+    setLocationCountry(country);
+    setLocationCity("");
+    setValue("location", country);
+    markLocalDirty();
+  };
+
+  const handleCityChange = (city: string) => {
+    setLocationCity(city);
+    const combined = city && locationCountry
+      ? `${city}, ${locationCountry}`
+      : locationCountry || city;
+    setValue("location", combined);
+    markLocalDirty();
+  };
 
   // ─── Skills Handlers ─────────────────────────────────────
   const addSkill = () => {
@@ -485,15 +601,30 @@ export default function CandidateProfilePage() {
               )}
             </div>
 
+            {/* Location: Country + City dropdowns */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  placeholder="e.g. San Francisco, CA"
-                  {...register("location")}
+                <Label>Country</Label>
+                <SearchableSelect
+                  value={locationCountry}
+                  onChange={handleCountryChange}
+                  options={COUNTRIES}
+                  placeholder="Search country…"
                 />
               </div>
+              <div className="space-y-2">
+                <Label>City</Label>
+                <SearchableSelect
+                  value={locationCity}
+                  onChange={handleCityChange}
+                  options={locationCountry ? (WORLD_LOCATIONS[locationCountry] ?? []) : []}
+                  placeholder={locationCountry ? "Search city…" : "Select country first"}
+                  disabled={!locationCountry}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input
@@ -502,9 +633,6 @@ export default function CandidateProfilePage() {
                   {...register("phone")}
                 />
               </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Preferred Job Type</Label>
                 <Select
@@ -522,7 +650,9 @@ export default function CandidateProfilePage() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
 
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Open to Work</Label>
                 <div className="flex items-center gap-3 pt-1">
