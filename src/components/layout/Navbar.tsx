@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { logout } from "@/lib/firebase/auth";
-import { getUserNotifications, markNotificationRead } from "@/lib/firebase/firestore";
+import { subscribeToNotifications, markNotificationRead } from "@/lib/firebase/firestore";
 import { Notification } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,9 +61,9 @@ export default function Navbar() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
-    if (user) {
-      getUserNotifications(user.uid, 10).then(setNotifications).catch(() => {});
-    }
+    if (!user) return;
+    const unsub = subscribeToNotifications(user.uid, setNotifications);
+    return unsub;
   }, [user]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;

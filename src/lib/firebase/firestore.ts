@@ -15,6 +15,7 @@ import {
   serverTimestamp,
   increment,
   runTransaction,
+  onSnapshot,
   Timestamp,
   DocumentSnapshot,
   QueryConstraint,
@@ -29,6 +30,8 @@ import {
   JobFilters,
   Notification,
   NotificationType,
+  Conversation,
+  Message,
 } from "@/types";
 
 const JOBS_PER_PAGE = 20;
@@ -421,4 +424,123 @@ export async function getAllTransactions(cap = 200) {
     query(collection(db, "transactions"), orderBy("createdAt", "desc"), limit(cap))
   );
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+// ─── Notifications (real-time) ───────────────────────────
+export function subscribeToNotifications(
+  userId: string,
+  callback: (notifications: Notification[]) => void
+): () => void {
+  if (!firebaseConfigured) return () => {};
+  const q = query(
+    collection(db, "notifications"),
+    where("userId", "==", userId),
+    orderBy("createdAt", "desc"),
+    limit(10)
+  );
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Notification)));
+  });
+}
+
+// ─── Profile Views ───────────────────────────────────────
+export async function incrementProfileView(candidateUid: string): Promise<void> {
+  if (!firebaseConfigured) return;
+  await updateDoc(doc(db, "candidateProfiles", candidateUid), {
+    profileViews: increment(1),
+  });
+}
+
+// ─── Messaging ───────────────────────────────────────────
+export async function getOrCreateConversation(
+  candidateId: string,
+  recruiterId: string,
+  names: { candidateName: string; recruiterName: string; companyName?: string }
+): Promise<string> {
+  if (!firebaseConfigured) throw new Error("Firebase not configured");
+  const q = query(
+    collection(db, "conversations"),
+    where("candidateId", "==", candidateId),
+    where("recruiterId", "==", recruiterId)
+  );
+  const snap = await getDocs(q);
+  if (!snap.empty) return snap.docs[0].id;
+
+  const ref = await addDoc(collection(db, "conversations"), {
+    participantIds: [candidateId, recruiterId],
+    candidateId,
+    recruiterId,
+    candidateName: names.candidateName,
+    recruiterName: names.recruiterName,
+    companyName: names.companyName ?? "",
+    lastMessage: "",
+    lastMessageAt: serverTimestamp(),
+    lastSenderId: "",
+    unreadCount: { [candidateId]: 0, [recruiterId]: 0 },
+    createdAt: serverTimestamp(),
+  });
+  return ref.id;
+}
+
+export async function sendMessage(
+  conversationId: string,
+  senderId: string,
+  senderName: string,
+  text: string,
+  recipientId: string
+): Promise<void> {
+  if (!firebaseConfigured) return;
+  await addDoc(collection(db, "conversations", conversationId, "messages"), {
+    senderId,
+    senderName,
+    text: text.trim(),
+    createdAt: serverTimestamp(),
+  });
+  await updateDoc(doc(db, "conversations", conversationId), {
+    lastMessage: text.trim(),
+    lastMessageAt: serverTimestamp(),
+    lastSenderId: senderId,
+    [`unreadCount.${recipientId}`]: increment(1),
+  });
+}
+
+export function subscribeToConversations(
+  userId: string,
+  callback: (conversations: Conversation[]) => void
+): () => void {
+  if (!firebaseConfigured) return () => {};
+  const q = query(
+    collection(db, "conversations"),
+    where("participantIds", "array-contains", userId),
+    orderBy("lastMessageAt", "desc")
+  );
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Conversation)));
+  });
+}
+
+export function subscribeToMessages(
+  conversationId: string,
+  callback: (messages: Message[]) => void
+): () => void {
+  if (!firebaseConfigured) return () => {};
+  const q = query(
+    collection(db, "conversations", conversationId, "messages"),
+    orderBy("createdAt", "asc")
+  );
+  return onSnapshot(q, (snap) => {
+    callback(
+      snap.docs.map((d) => ({ id: d.id, conversationId, ...d.data() } as Message))
+    );
+  });
+}
+
+export async function markConversationRead(
+  conversationId: string,
+  userId: string
+): Promise<void> {
+  if (!firebaseConfigured) return;
+  await updateDoc(doc(db, "conversations", conversationId), {
+    [`unreadCount.${userId}`]: 0,
+  });
 }

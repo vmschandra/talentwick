@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { getAllCandidateProfiles, getAllUsers } from "@/lib/firebase/firestore";
+import { useRouter } from "next/navigation";
+import { getAllCandidateProfiles, getAllUsers, incrementProfileView } from "@/lib/firebase/firestore";
 import { CandidateProfile, UserDoc, JobType } from "@/types";
 import { parseLocation, formatCurrency } from "@/lib/utils";
 import { WORLD_LOCATIONS } from "@/lib/data/locations";
@@ -18,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import SearchableSelect from "@/components/shared/SearchableSelect";
-import { MapPin, Briefcase, Clock, FileText, Users, Search, X } from "lucide-react";
+import { MapPin, Briefcase, Clock, FileText, Users, Search, X, MessageSquare } from "lucide-react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const COUNTRIES = Object.keys(WORLD_LOCATIONS).sort();
@@ -69,6 +70,7 @@ interface Candidate extends CandidateProfile {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function BrowseCandidatesPage() {
+  const router = useRouter();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -361,17 +363,38 @@ export default function BrowseCandidatesPage() {
                     </div>
                   )}
 
-                  {/* Resume */}
-                  {c.resumeURL && (
-                    <a
-                      href={c.resumeURL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-auto inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                  {/* Actions */}
+                  <div className="mt-auto flex items-center gap-2 pt-1">
+                    <Button
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => {
+                        incrementProfileView(c.uid).catch(() => {});
+                        router.push(
+                          `/recruiter/messages?start=${c.uid}&name=${encodeURIComponent(c.displayName)}`
+                        );
+                      }}
                     >
-                      <FileText className="h-3.5 w-3.5" /> View Resume
-                    </a>
-                  )}
+                      <MessageSquare className="mr-1.5 h-3.5 w-3.5" /> Message
+                    </Button>
+                    {c.resumeURL && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        asChild
+                        onClick={() => incrementProfileView(c.uid).catch(() => {})}
+                      >
+                        <a
+                          href={c.resumeURL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <FileText className="mr-1.5 h-3.5 w-3.5" /> Resume
+                        </a>
+                      </Button>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             );

@@ -196,3 +196,28 @@ export interface JobFilters {
 }
 
 export type SortOption = "newest" | "salary-high" | "salary-low" | "most-applicants";
+
+// ─── Messaging ───────────────────────────────────────────
+export interface Conversation {
+  id: string;
+  participantIds: string[];
+  candidateId: string;
+  recruiterId: string;
+  candidateName: string;
+  recruiterName: string;
+  companyName?: string;
+  lastMessage: string;
+  lastMessageAt: Timestamp;
+  lastSenderId: string;
+  unreadCount: Record<string, number>;
+  createdAt: Timestamp;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  senderName: string;
+  text: string;
+  createdAt: Timestamp;
+}
