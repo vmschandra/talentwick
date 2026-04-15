@@ -49,6 +49,7 @@ export interface CandidateProfile {
   expectedSalary?: { min: number; max: number; currency: string };
   openToWork: boolean;
   profileCompleteness: number;
+  profileViews?: number;
   updatedAt: Timestamp;
 }
 
