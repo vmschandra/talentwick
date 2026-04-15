@@ -71,7 +71,7 @@ export default function Navbar() {
   const handleLogout = async () => {
     await logout();
     document.cookie = "session=; path=/; max-age=0";
-    router.push("/");
+    window.location.href = "/";
   };
 
   const handleNotifClick = async (n: Notification) => {
