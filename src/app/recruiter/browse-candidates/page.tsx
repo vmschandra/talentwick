@@ -28,6 +28,7 @@ import {
   X,
 } from "lucide-react";
 
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function calcTotalYears(experience: CandidateProfile["experience"]): number {
@@ -77,6 +78,7 @@ export default function BrowseCandidatesPage() {
   const [search, setSearch] = useState("");
   const [jobType, setJobType] = useState<string>("all");
   const [minExp, setMinExp] = useState<string>("0");
+  const [location, setLocation] = useState<string>("all");
   const [openOnly, setOpenOnly] = useState(false);
 
   useEffect(() => {
@@ -102,11 +104,19 @@ export default function BrowseCandidatesPage() {
     load().catch(() => setLoading(false));
   }, []);
 
+  // Unique sorted locations derived from loaded candidates
+  const locationOptions = useMemo(() => {
+    const set = new Set<string>();
+    candidates.forEach((c) => { if (c.location?.trim()) set.add(c.location.trim()); });
+    return Array.from(set).sort();
+  }, [candidates]);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return candidates.filter((c) => {
       if (openOnly && !c.openToWork) return false;
       if (jobType !== "all" && c.preferredJobType !== jobType) return false;
+      if (location !== "all" && c.location?.trim() !== location) return false;
       const years = calcTotalYears(c.experience);
       if (years < Number(minExp)) return false;
       if (q) {
@@ -117,14 +127,15 @@ export default function BrowseCandidatesPage() {
       }
       return true;
     });
-  }, [candidates, search, jobType, minExp, openOnly]);
+  }, [candidates, search, jobType, minExp, location, openOnly]);
 
-  const hasFilters = search || jobType !== "all" || minExp !== "0" || openOnly;
+  const hasFilters = search || jobType !== "all" || minExp !== "0" || location !== "all" || openOnly;
 
   function clearFilters() {
     setSearch("");
     setJobType("all");
     setMinExp("0");
+    setLocation("all");
     setOpenOnly(false);
   }
 
@@ -154,6 +165,20 @@ export default function BrowseCandidatesPage() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
+
+            {/* Location */}
+            <Select value={location} onValueChange={setLocation}>
+              <SelectTrigger className="w-44">
+                <MapPin className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />
+                <SelectValue placeholder="Location" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All locations</SelectItem>
+                {locationOptions.map((loc) => (
+                  <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             {/* Job type */}
             <Select value={jobType} onValueChange={setJobType}>
