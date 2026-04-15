@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bell, Menu, X, Briefcase, LogOut, User, LayoutDashboard, CreditCard, Building } from "lucide-react";
+import { Bell, Menu, X, Briefcase, LogOut, User, LayoutDashboard, CreditCard, Building, MessageSquare, HelpCircle } from "lucide-react";
 import { siteConfig } from "@/config/site";
 
 export default function Navbar() {
@@ -64,16 +64,14 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop links */}
-        <div className="hidden items-center gap-6 md:flex">
-          {userDoc?.role === "recruiter" ? (
-            <Link href="/recruiter/browse-candidates" className="text-sm font-medium text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-              Browse Candidates
-            </Link>
-          ) : (
-            <Link href="/browse-jobs" className="text-sm font-medium text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+        <div className="hidden items-center gap-3 md:flex">
+          {/* Non-recruiter: Browse Jobs text link */}
+          {userDoc?.role !== "recruiter" && (
+            <Link href="/browse-jobs" className="text-sm font-medium text-primary-foreground/80 hover:text-primary-foreground transition-colors mr-3">
               Browse Jobs
             </Link>
           )}
+
           {!loading && (!user || !userDoc) && (
             <>
               <Link href="/login?role=candidate">
@@ -84,8 +82,33 @@ export default function Navbar() {
               </Link>
             </>
           )}
+
           {!loading && user && userDoc && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              {/* Recruiter-only: Help + Messages */}
+              {userDoc.role === "recruiter" && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground"
+                    title="Help"
+                    onClick={() => router.push("/recruiter/dashboard")}
+                  >
+                    <HelpCircle className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground"
+                    title="Messages"
+                    onClick={() => router.push("/recruiter/dashboard")}
+                  >
+                    <MessageSquare className="h-5 w-5" />
+                  </Button>
+                </>
+              )}
+
               {/* Notifications */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -168,9 +191,7 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="border-t border-primary-foreground/20 bg-primary p-4 md:hidden">
           <div className="flex flex-col gap-3">
-            {userDoc?.role === "recruiter" ? (
-              <Link href="/recruiter/browse-candidates" className="text-sm font-medium text-primary-foreground" onClick={() => setMobileOpen(false)}>Browse Candidates</Link>
-            ) : (
+            {userDoc?.role !== "recruiter" && (
               <Link href="/browse-jobs" className="text-sm font-medium text-primary-foreground" onClick={() => setMobileOpen(false)}>Browse Jobs</Link>
             )}
             {!loading && (!user || !userDoc) ? (

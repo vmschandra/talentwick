@@ -314,6 +314,18 @@ export async function getJobApplications(jobId: string): Promise<Application[]> 
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Application));
 }
 
+export async function getRecruiterApplications(recruiterId: string): Promise<Application[]> {
+  if (!firebaseConfigured) return [];
+  const q = query(
+    collection(db, "applications"),
+    where("recruiterId", "==", recruiterId),
+    orderBy("appliedAt", "desc"),
+    limit(200)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Application));
+}
+
 export async function updateApplicationStatus(
   applicationId: string,
   status: ApplicationStatus,
