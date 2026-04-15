@@ -61,6 +61,28 @@ export const stripeProvider: PaymentProvider = {
       process.env.STRIPE_WEBHOOK_SECRET!
     );
 
+    // Embedded Payment Element flow
+    if (event.type === "payment_intent.succeeded") {
+      const pi = event.data.object as Stripe.PaymentIntent;
+      const { recruiterId, planId, credits } = pi.metadata ?? {};
+
+      if (!recruiterId || !planId || !credits) {
+        throw new Error("PaymentIntent is missing required metadata fields");
+      }
+
+      return {
+        type: "payment.success",
+        sessionId: pi.id,
+        recruiterId,
+        plan: planId,
+        credits: parseInt(credits, 10),
+        amount: pi.amount,
+        gatewayTransactionId: pi.id,
+        rawEvent: event,
+      };
+    }
+
+    // Hosted Checkout flow
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       const { recruiterId, planId, credits } = session.metadata ?? {};
