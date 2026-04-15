@@ -61,6 +61,16 @@ export function formatSalary(
   return `${fmt(salary.min)} – ${fmt(salary.max)} / ${salary.period}`;
 }
 
+/** Split a free-text location ("City, Country" or "City") into parts. */
+export function parseLocation(raw: string): { city: string; country: string } {
+  if (!raw?.trim()) return { city: "", country: "" };
+  const parts = raw.split(",").map((s) => s.trim()).filter(Boolean);
+  if (parts.length >= 2) {
+    return { city: parts.slice(0, -1).join(", "), country: parts[parts.length - 1] };
+  }
+  return { city: parts[0], country: "" };
+}
+
 export function calculateProfileCompleteness(profile: Record<string, unknown>): number {
   const weights: Record<string, number> = {
     headline: 10,

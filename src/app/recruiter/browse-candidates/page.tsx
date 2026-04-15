@@ -3,34 +3,15 @@
 import { useEffect, useState, useMemo } from "react";
 import { getAllCandidateProfiles, getAllUsers } from "@/lib/firebase/firestore";
 import { CandidateProfile, UserDoc, JobType } from "@/types";
-import { COUNTRIES, getCities } from "@/lib/data/locations";
-import { formatCurrency } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
+import { parseLocation, formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  MapPin,
-  Search,
-  Briefcase,
-  Clock,
-  FileText,
-  Users,
-  X,
-} from "lucide-react";
-
+import { MapPin, Briefcase, Clock, FileText, Users } from "lucide-react";
+import SearchBar, { SearchValues } from "@/components/shared/SearchBar";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function calcTotalYears(experience: CandidateProfile["experience"]): number {
   if (!experience?.length) return 0;
   let totalMonths = 0;
@@ -38,22 +19,13 @@ function calcTotalYears(experience: CandidateProfile["experience"]): number {
   for (const exp of experience) {
     const [sy, sm] = exp.startDate.split("-").map(Number);
     const start = new Date(sy, (sm || 1) - 1);
-    let end: Date;
-    if (exp.current || !exp.endDate) {
-      end = now;
-    } else {
-      const [ey, em] = exp.endDate.split("-").map(Number);
-      end = new Date(ey, (em || 1) - 1);
-    }
+    const end = exp.current || !exp.endDate
+      ? now
+      : (() => { const [ey, em] = exp.endDate!.split("-").map(Number); return new Date(ey, (em || 1) - 1); })();
     const months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
     if (months > 0) totalMonths += months;
   }
   return Math.floor(totalMonths / 12);
-}
-
-function experienceLabel(years: number): string {
-  if (years === 0) return "< 1 yr";
-  return `${years} yr${years !== 1 ? "s" : ""}`;
 }
 
 const JOB_TYPE_LABELS: Record<JobType, string> = {
@@ -63,18 +35,6 @@ const JOB_TYPE_LABELS: Record<JobType, string> = {
   internship: "Internship",
 };
 
-// ─── Location parsing ─────────────────────────────────────────────────────────
-// Expects free-text like "Hyderabad", "SFO, USA", "London, UK"
-function parseLocation(raw: string): { city: string; country: string } {
-  if (!raw?.trim()) return { city: "", country: "" };
-  const parts = raw.split(",").map((s) => s.trim()).filter(Boolean);
-  if (parts.length >= 2) {
-    return { city: parts.slice(0, -1).join(", "), country: parts[parts.length - 1] };
-  }
-  return { city: parts[0], country: "" };
-}
-
-// ─── Merged candidate type ────────────────────────────────────────────────────
 interface Candidate extends CandidateProfile {
   displayName: string;
   email: string;
@@ -84,13 +44,7 @@ interface Candidate extends CandidateProfile {
 export default function BrowseCandidatesPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Filters
-  const [search, setSearch] = useState("");
-  const [jobType, setJobType] = useState<string>("all");
-  const [minExp, setMinExp] = useState<string>("0");
-  const [country, setCountry] = useState<string>("all");
-  const [city, setCity] = useState<string>("all");
+  const [search, setSearch] = useState<SearchValues>({ title: "", city: "", country: "" });
 
   useEffect(() => {
     async function load() {
@@ -115,154 +69,66 @@ export default function BrowseCandidatesPage() {
     load().catch(() => setLoading(false));
   }, []);
 
-  // Country list: full static world library
-  const countryOptions = COUNTRIES;
+  // ── Autocomplete suggestions (derived from real candidate data) ──
+  const titleSuggestions = useMemo(
+    () => Array.from(new Set(candidates.map((c) => c.headline).filter(Boolean))).sort() as string[],
+    [candidates]
+  );
+  const citySuggestions = useMemo(
+    () => Array.from(new Set(candidates.map((c) => parseLocation(c.location ?? "").city).filter(Boolean))).sort() as string[],
+    [candidates]
+  );
+  const countrySuggestions = useMemo(
+    () => Array.from(new Set(candidates.map((c) => parseLocation(c.location ?? "").country).filter(Boolean))).sort() as string[],
+    [candidates]
+  );
 
-  // City list: all cities for the selected country (static), or empty when none selected
-  const cityOptions = country === "all" ? [] : getCities(country);
-
+  // ── Filter results ──
   const filtered = useMemo(() => {
-    const q = search.toLowerCase();
+    const t = search.title.toLowerCase();
+    const ci = search.city.toLowerCase();
+    const co = search.country.toLowerCase();
     return candidates.filter((c) => {
-      if (jobType !== "all" && c.preferredJobType !== jobType) return false;
-      const { city: ci, country: co } = parseLocation(c.location ?? "");
-      if (country !== "all" && co !== country) return false;
-      if (city !== "all" && ci !== city) return false;
-      const years = calcTotalYears(c.experience);
-      if (years < Number(minExp)) return false;
-      if (q) {
-        const inHeadline = c.headline?.toLowerCase().includes(q);
-        const inSkills = c.skills?.some((s) => s.toLowerCase().includes(q));
-        const inName = c.displayName.toLowerCase().includes(q);
-        if (!inHeadline && !inSkills && !inName) return false;
-      }
+      if (t && !c.headline?.toLowerCase().includes(t) && !c.skills?.some((s) => s.toLowerCase().includes(t))) return false;
+      const loc = parseLocation(c.location ?? "");
+      if (ci && !loc.city.toLowerCase().includes(ci)) return false;
+      if (co && !loc.country.toLowerCase().includes(co)) return false;
       return true;
     });
-  }, [candidates, search, jobType, minExp, country, city]);
+  }, [candidates, search]);
 
-  const hasFilters = search || jobType !== "all" || minExp !== "0" || country !== "all" || city !== "all";
-
-  function clearFilters() {
-    setSearch("");
-    setJobType("all");
-    setMinExp("0");
-    setCountry("all");
-    setCity("all");
-  }
+  const isFiltering = search.title || search.city || search.country;
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Browse Candidates</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {loading ? "Loading…" : `${filtered.length} candidate${filtered.length !== 1 ? "s" : ""} found`}
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Browse Candidates</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          {loading ? "Loading…" : `${filtered.length} candidate${filtered.length !== 1 ? "s" : ""} found`}
+        </p>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-3 items-end">
-            {/* Search */}
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, headline or skill…"
-                className="pl-9"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-
-            {/* Country */}
-            <Select
-              value={country}
-              onValueChange={(val) => { setCountry(val); setCity("all"); }}
-            >
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Country" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Country</SelectItem>
-                {countryOptions.map((co) => (
-                  <SelectItem key={co} value={co}>{co}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* City — enabled only after a country is selected */}
-            <Select
-              value={city}
-              onValueChange={setCity}
-              disabled={country === "all"}
-            >
-              <SelectTrigger className="w-40">
-                <MapPin className="mr-1 h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                <SelectValue placeholder={country === "all" ? "Select country first" : "All cities"} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">City</SelectItem>
-                {cityOptions.map((ci) => (
-                  <SelectItem key={ci} value={ci}>{ci}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Job type */}
-            <Select value={jobType} onValueChange={setJobType}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Job type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Job type</SelectItem>
-                <SelectItem value="full-time">Full-time</SelectItem>
-                <SelectItem value="part-time">Part-time</SelectItem>
-                <SelectItem value="contract">Contract</SelectItem>
-                <SelectItem value="internship">Internship</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Min experience */}
-            <Select value={minExp} onValueChange={setMinExp}>
-              <SelectTrigger className="w-44">
-                <SelectValue placeholder="Experience" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">Experience</SelectItem>
-                <SelectItem value="1">1+ years</SelectItem>
-                <SelectItem value="3">3+ years</SelectItem>
-                <SelectItem value="5">5+ years</SelectItem>
-                <SelectItem value="10">10+ years</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Clear */}
-            {hasFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="h-10 gap-1 text-muted-foreground">
-                <X className="h-3.5 w-3.5" /> Clear
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Search bar */}
+      <SearchBar
+        titleSuggestions={titleSuggestions}
+        citySuggestions={citySuggestions}
+        countrySuggestions={countrySuggestions}
+        onSearch={setSearch}
+        titlePlaceholder="Job title or skill"
+      />
 
       {/* Results */}
       {loading ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-52 w-full" />
-          ))}
+          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-52 w-full" />)}
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
           <Users className="h-10 w-10 text-muted-foreground/40" />
-          <p className="font-medium text-muted-foreground">No candidates match your filters</p>
-          {hasFilters && (
-            <Button variant="outline" size="sm" onClick={clearFilters}>Clear filters</Button>
-          )}
+          <p className="font-medium text-muted-foreground">
+            {isFiltering ? "No candidates match your search" : "No candidates available yet"}
+          </p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -270,11 +136,13 @@ export default function BrowseCandidatesPage() {
             const years = calcTotalYears(c.experience);
             const visibleSkills = c.skills?.slice(0, 5) ?? [];
             const extraSkills = (c.skills?.length ?? 0) - visibleSkills.length;
+            const { city, country } = parseLocation(c.location ?? "");
+            const locationLabel = [city, country].filter(Boolean).join(", ");
 
             return (
               <Card key={c.uid} className="flex flex-col hover:shadow-md transition-shadow">
                 <CardContent className="p-5 flex flex-col gap-3 flex-1">
-                  {/* Name + open-to-work */}
+                  {/* Name + open badge */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold truncate">{c.displayName}</p>
@@ -289,11 +157,11 @@ export default function BrowseCandidatesPage() {
 
                   <Separator />
 
-                  {/* Meta row */}
+                  {/* Meta */}
                   <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
-                    {c.location && (
+                    {locationLabel && (
                       <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" /> {c.location}
+                        <MapPin className="h-3 w-3" /> {locationLabel}
                       </span>
                     )}
                     {c.preferredJobType && (
@@ -302,13 +170,12 @@ export default function BrowseCandidatesPage() {
                       </span>
                     )}
                     <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> {experienceLabel(years)} exp
+                      <Clock className="h-3 w-3" />
+                      {years === 0 ? "< 1 yr exp" : `${years} yr${years !== 1 ? "s" : ""} exp`}
                     </span>
                     {c.expectedSalary && (
                       <span>
-                        {formatCurrency(c.expectedSalary.min, c.expectedSalary.currency)}
-                        {" – "}
-                        {formatCurrency(c.expectedSalary.max, c.expectedSalary.currency)}
+                        {formatCurrency(c.expectedSalary.min, c.expectedSalary.currency)}–{formatCurrency(c.expectedSalary.max, c.expectedSalary.currency)}
                       </span>
                     )}
                   </div>
@@ -325,7 +192,7 @@ export default function BrowseCandidatesPage() {
                     </div>
                   )}
 
-                  {/* Resume link */}
+                  {/* Resume */}
                   {c.resumeURL && (
                     <a
                       href={c.resumeURL}
