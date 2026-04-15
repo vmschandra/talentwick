@@ -90,21 +90,19 @@ export default function Navbar() {
                 <>
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className="text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground"
-                    title="Help"
-                    onClick={() => router.push("/recruiter/dashboard")}
+                    className="flex flex-col items-center gap-0.5 h-auto py-1.5 px-3 text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground"
+                    onClick={() => router.push("/recruiter/help")}
                   >
-                    <HelpCircle className="h-5 w-5" />
+                    <HelpCircle className="h-4 w-4" />
+                    <span className="text-[10px] leading-none">Help</span>
                   </Button>
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className="text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground"
-                    title="Messages"
-                    onClick={() => router.push("/recruiter/dashboard")}
+                    className="flex flex-col items-center gap-0.5 h-auto py-1.5 px-3 text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground"
+                    onClick={() => router.push("/recruiter/messages")}
                   >
-                    <MessageSquare className="h-5 w-5" />
+                    <MessageSquare className="h-4 w-4" />
+                    <span className="text-[10px] leading-none">Messages</span>
                   </Button>
                 </>
               )}
@@ -112,14 +110,26 @@ export default function Navbar() {
               {/* Notifications */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground">
-                    <Bell className="h-5 w-5" />
-                    {unreadCount > 0 && (
-                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-white">
-                        {unreadCount}
-                      </span>
-                    )}
-                  </Button>
+                  {userDoc.role === "recruiter" ? (
+                    <Button variant="ghost" className="relative flex flex-col items-center gap-0.5 h-auto py-1.5 px-3 text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground">
+                      <Bell className="h-4 w-4" />
+                      <span className="text-[10px] leading-none">Notifications</span>
+                      {unreadCount > 0 && (
+                        <span className="absolute right-1.5 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-white">
+                          {unreadCount}
+                        </span>
+                      )}
+                    </Button>
+                  ) : (
+                    <Button variant="ghost" size="icon" className="relative text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground">
+                      <Bell className="h-5 w-5" />
+                      {unreadCount > 0 && (
+                        <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-white">
+                          {unreadCount}
+                        </span>
+                      )}
+                    </Button>
+                  )}
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-80">
                   <DropdownMenuLabel>Notifications</DropdownMenuLabel>
