@@ -79,7 +79,6 @@ export default function BrowseCandidatesPage() {
   const [jobType, setJobType] = useState<string>("all");
   const [minExp, setMinExp] = useState<string>("0");
   const [location, setLocation] = useState<string>("all");
-  const [openOnly, setOpenOnly] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -114,7 +113,6 @@ export default function BrowseCandidatesPage() {
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return candidates.filter((c) => {
-      if (openOnly && !c.openToWork) return false;
       if (jobType !== "all" && c.preferredJobType !== jobType) return false;
       if (location !== "all" && c.location?.trim() !== location) return false;
       const years = calcTotalYears(c.experience);
@@ -127,16 +125,15 @@ export default function BrowseCandidatesPage() {
       }
       return true;
     });
-  }, [candidates, search, jobType, minExp, location, openOnly]);
+  }, [candidates, search, jobType, minExp, location]);
 
-  const hasFilters = search || jobType !== "all" || minExp !== "0" || location !== "all" || openOnly;
+  const hasFilters = search || jobType !== "all" || minExp !== "0" || location !== "all";
 
   function clearFilters() {
     setSearch("");
     setJobType("all");
     setMinExp("0");
     setLocation("all");
-    setOpenOnly(false);
   }
 
   return (
@@ -200,23 +197,13 @@ export default function BrowseCandidatesPage() {
                 <SelectValue placeholder="Experience" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">Any experience</SelectItem>
+                <SelectItem value="0">Experience</SelectItem>
                 <SelectItem value="1">1+ years</SelectItem>
                 <SelectItem value="3">3+ years</SelectItem>
                 <SelectItem value="5">5+ years</SelectItem>
                 <SelectItem value="10">10+ years</SelectItem>
               </SelectContent>
             </Select>
-
-            {/* Open to work toggle */}
-            <Button
-              variant={openOnly ? "default" : "outline"}
-              size="sm"
-              onClick={() => setOpenOnly((v) => !v)}
-              className="h-10"
-            >
-              Open to work
-            </Button>
 
             {/* Clear */}
             {hasFilters && (
