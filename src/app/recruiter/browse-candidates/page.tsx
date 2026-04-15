@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { getAllCandidateProfiles } from "@/lib/firebase/firestore";
-import { getAllUsers } from "@/lib/firebase/firestore";
+import { getAllCandidateProfiles, getAllUsers } from "@/lib/firebase/firestore";
 import { CandidateProfile, UserDoc, JobType } from "@/types";
+import { COUNTRIES, getCities } from "@/lib/data/locations";
 import { formatCurrency } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -115,26 +115,11 @@ export default function BrowseCandidatesPage() {
     load().catch(() => setLoading(false));
   }, []);
 
-  // Unique countries and cities derived from loaded candidates
-  const countryOptions = useMemo(() => {
-    const set = new Set<string>();
-    candidates.forEach((c) => {
-      const { country: co } = parseLocation(c.location ?? "");
-      if (co) set.add(co);
-    });
-    return Array.from(set).sort();
-  }, [candidates]);
+  // Country list: full static world library
+  const countryOptions = COUNTRIES;
 
-  // Cities narrowed to selected country (or all cities when no country selected)
-  const cityOptions = useMemo(() => {
-    const set = new Set<string>();
-    candidates.forEach((c) => {
-      const { city: ci, country: co } = parseLocation(c.location ?? "");
-      if (!ci) return;
-      if (country === "all" || co === country) set.add(ci);
-    });
-    return Array.from(set).sort();
-  }, [candidates, country]);
+  // City list: all cities for the selected country (static), or empty when none selected
+  const cityOptions = country === "all" ? [] : getCities(country);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -208,11 +193,15 @@ export default function BrowseCandidatesPage() {
               </SelectContent>
             </Select>
 
-            {/* City */}
-            <Select value={city} onValueChange={setCity}>
+            {/* City — enabled only after a country is selected */}
+            <Select
+              value={city}
+              onValueChange={setCity}
+              disabled={country === "all"}
+            >
               <SelectTrigger className="w-40">
                 <MapPin className="mr-1 h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                <SelectValue placeholder="City" />
+                <SelectValue placeholder={country === "all" ? "Select country first" : "All cities"} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All cities</SelectItem>
