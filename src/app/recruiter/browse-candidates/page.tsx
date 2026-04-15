@@ -24,7 +24,7 @@ import { MapPin, Briefcase, Clock, FileText, Users, Search, X } from "lucide-rea
 const COUNTRIES = Object.keys(WORLD_LOCATIONS).sort();
 
 const EXPERIENCE_OPTIONS = [
-  { label: "Any experience", value: "any" },
+  { label: "Experience", value: "any" },
   { label: "Less than 1 year", value: "0" },
   { label: "1+ years", value: "1" },
   { label: "3+ years", value: "3" },
