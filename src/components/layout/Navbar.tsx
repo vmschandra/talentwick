@@ -147,16 +147,6 @@ export default function Navbar() {
           {!loading && user && userDoc && (
             <div className="flex items-center">
 
-              {/* Candidate: Browse Jobs text link */}
-              {isCandidate && (
-                <Link
-                  href="/candidate/jobs"
-                  className="mr-2 text-sm font-medium text-primary-foreground/80 hover:text-primary-foreground transition-colors px-2"
-                >
-                  Browse Jobs
-                </Link>
-              )}
-
               {/* Help — recruiters and candidates */}
               {(isRecruiter || isCandidate) && (
                 <NavIconButton
@@ -278,11 +268,6 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="border-t border-primary-foreground/20 bg-primary p-4 md:hidden">
           <div className="flex flex-col gap-3">
-            {isCandidate && (
-              <Link href="/candidate/jobs" className="text-sm font-medium text-primary-foreground" onClick={() => setMobileOpen(false)}>
-                Browse Jobs
-              </Link>
-            )}
             {(isRecruiter || isCandidate) && (
               <>
                 <Link href={helpPath} className="text-sm font-medium text-primary-foreground" onClick={() => setMobileOpen(false)}>Help</Link>
