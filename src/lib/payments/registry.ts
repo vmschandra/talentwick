@@ -14,6 +14,11 @@ export async function getPaymentProvider(): Promise<PaymentProvider> {
       _provider = stripeProvider;
       break;
     }
+    case "cashfree": {
+      const { cashfreeProvider } = await import("./providers/cashfree");
+      _provider = cashfreeProvider;
+      break;
+    }
     case "razorpay": {
       const { razorpayProvider } = await import("./providers/razorpay");
       _provider = razorpayProvider;
