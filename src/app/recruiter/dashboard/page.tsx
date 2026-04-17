@@ -139,8 +139,8 @@ export default function RecruiterDashboard() {
           <h1 className="text-2xl font-bold tracking-tight">
             Welcome back{userDoc.displayName ? `, ${userDoc.displayName.split(" ")[0]}` : ""}
           </h1>
-          {recruiterProfile && recruiterProfile.jobPostCredits > 0 && recruiterProfile.creditsExpiresAt &&
-            (recruiterProfile.creditsExpiresAt as any).toDate() > new Date() && (
+          {recruiterProfile && recruiterProfile.jobPostCredits > 0 &&
+            (!recruiterProfile.creditsExpiresAt || (recruiterProfile.creditsExpiresAt as any).toDate() > new Date()) && (
             <span className="inline-flex items-center gap-1 rounded-full border border-yellow-300 bg-yellow-50 px-2.5 py-0.5 text-xs font-semibold text-yellow-800">
               <Sparkles className="h-3 w-3" /> Pro Account
             </span>

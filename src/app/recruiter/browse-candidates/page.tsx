@@ -72,7 +72,7 @@ interface Candidate extends CandidateProfile {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 function hasValidCredits(profile: RecruiterProfile | null): boolean {
   if (!profile || profile.jobPostCredits <= 0) return false;
-  if (!profile.creditsExpiresAt) return false;
+  if (!profile.creditsExpiresAt) return true;
   return (profile.creditsExpiresAt as any).toDate() > new Date();
 }
 
