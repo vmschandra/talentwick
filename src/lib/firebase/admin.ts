@@ -13,9 +13,17 @@ function getAdminApp(): App {
 
   const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY
-    ?.replace(/^"|"$/g, "")   // strip surrounding quotes (common Vercel paste issue)
-    ?.replace(/\\n/g, "\n");   // convert literal \n to real newlines
+
+  // Prefer base64-encoded key (immune to Vercel whitespace/escaping corruption).
+  // Fall back to raw key with common escaping fixes.
+  let privateKey: string | undefined;
+  if (process.env.FIREBASE_ADMIN_PRIVATE_KEY_BASE64) {
+    privateKey = Buffer.from(process.env.FIREBASE_ADMIN_PRIVATE_KEY_BASE64, "base64").toString("utf8");
+  } else {
+    privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY
+      ?.replace(/^["']|["']$/g, "")  // strip surrounding quotes
+      ?.replace(/\\n/g, "\n");        // convert literal \n to real newlines
+  }
 
   if (!projectId || !clientEmail || !privateKey) {
     throw new Error("Firebase Admin SDK is not configured. Set FIREBASE_ADMIN_* env vars.");
