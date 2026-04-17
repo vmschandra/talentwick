@@ -1,19 +1,67 @@
 import { NextResponse } from "next/server";
 import { getPaymentProvider } from "@/lib/payments/registry";
-import { addCreditsToRecruiter } from "@/lib/payments/credit-service";
 import { getPlanById } from "@/config/pricing";
-import { db } from "@/lib/firebase/config";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { getAdminDb } from "@/lib/firebase/admin";
+import { FieldValue } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
 
-// Stripe (and other gateways) retry webhooks on failure. This guard prevents
-// double-crediting a recruiter if the same session ID arrives more than once.
 async function isAlreadyProcessed(sessionId: string): Promise<boolean> {
-  const snap = await getDocs(
-    query(collection(db, "transactions"), where("gatewaySessionId", "==", sessionId))
-  );
+  const db = getAdminDb();
+  const snap = await db
+    .collection("transactions")
+    .where("gatewaySessionId", "==", sessionId)
+    .limit(1)
+    .get();
   return !snap.empty;
+}
+
+async function addCreditsToRecruiter(
+  recruiterId: string,
+  credits: number,
+  data: {
+    plan: string;
+    amount: number;
+    currency: string;
+    gateway: string;
+    gatewaySessionId: string;
+    gatewayTransactionId: string;
+  }
+) {
+  const db = getAdminDb();
+  const recruiterRef = db.collection("recruiterProfiles").doc(recruiterId);
+
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(recruiterRef);
+    if (!snap.exists) throw new Error("Recruiter profile not found");
+    tx.update(recruiterRef, {
+      jobPostCredits: FieldValue.increment(credits),
+      totalSpent: FieldValue.increment(data.amount),
+    });
+  });
+
+  await db.collection("transactions").add({
+    recruiterId,
+    gateway: data.gateway,
+    gatewaySessionId: data.gatewaySessionId,
+    gatewayTransactionId: data.gatewayTransactionId,
+    plan: data.plan,
+    amount: data.amount,
+    currency: data.currency,
+    credits,
+    status: "completed",
+    createdAt: FieldValue.serverTimestamp(),
+  });
+
+  await db.collection("notifications").add({
+    userId: recruiterId,
+    type: "credits_added",
+    title: "Credits Added",
+    message: `${credits} job posting credit${credits > 1 ? "s" : ""} added to your account.`,
+    link: "/recruiter/pricing",
+    read: false,
+    createdAt: FieldValue.serverTimestamp(),
+  });
 }
 
 export async function POST(request: Request) {
@@ -22,7 +70,6 @@ export async function POST(request: Request) {
     const event = await provider.verifyWebhookSignature(request);
 
     if (event.type === "payment.success") {
-      // Idempotency: skip if this session was already credited
       if (await isAlreadyProcessed(event.sessionId)) {
         return NextResponse.json({ received: true, duplicate: true });
       }
@@ -31,7 +78,7 @@ export async function POST(request: Request) {
       await addCreditsToRecruiter(event.recruiterId, event.credits, {
         plan: event.plan,
         amount: event.amount,
-        currency: plan?.currency || "usd",
+        currency: plan?.currency || "inr",
         gateway: provider.name,
         gatewaySessionId: event.sessionId,
         gatewayTransactionId: event.gatewayTransactionId,
