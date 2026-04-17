@@ -102,19 +102,22 @@ service cloud.firestore {
 
     // ── Conversations ─────────────────────────────────────────────────────
     match /conversations/{convId} {
-      // Participants can read and update (lastMessage, unreadCount, etc.)
-      allow read, update: if isSignedIn() && (
+      // read uses participantIds array-contains query — rule must match that field
+      allow read: if isSignedIn() && (
+        request.auth.uid in resource.data.participantIds || isAdmin()
+      );
+      // update (lastMessage, unreadCount) by direct participant fields
+      allow update: if isSignedIn() && (
         request.auth.uid == resource.data.candidateId ||
         request.auth.uid == resource.data.recruiterId ||
         isAdmin()
       );
-      // Writes (create) handled server-side via Admin SDK — no client create needed
+      // create is server-side only (Admin SDK)
 
       // Messages subcollection — participants only
       match /messages/{msgId} {
         allow read, create: if isSignedIn() && (
-          request.auth.uid == get(/databases/$(database)/documents/conversations/$(convId)).data.candidateId ||
-          request.auth.uid == get(/databases/$(database)/documents/conversations/$(convId)).data.recruiterId ||
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participantIds ||
           isAdmin()
         );
       }
