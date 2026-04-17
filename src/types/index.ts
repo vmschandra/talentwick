@@ -69,6 +69,7 @@ export interface RecruiterProfile {
   employeeId?: string;
   workEmail?: string;
   jobPostCredits: number;
+  creditsExpiresAt?: Timestamp;
   totalCreditsUsed: number;
   totalSpent: number;
   updatedAt: Timestamp;

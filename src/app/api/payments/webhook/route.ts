@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getPaymentProvider } from "@/lib/payments/registry";
 import { getPlanById } from "@/config/pricing";
 import { getAdminDb } from "@/lib/firebase/admin";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +30,7 @@ async function addCreditsToRecruiter(
 ) {
   const db = getAdminDb();
   const recruiterRef = db.collection("recruiterProfiles").doc(recruiterId);
+  const expiresAt = Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
 
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(recruiterRef);
@@ -37,6 +38,7 @@ async function addCreditsToRecruiter(
     tx.update(recruiterRef, {
       jobPostCredits: FieldValue.increment(credits),
       totalSpent: FieldValue.increment(data.amount),
+      creditsExpiresAt: expiresAt,
     });
   });
 

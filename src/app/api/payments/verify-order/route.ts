@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { getPlanById } from "@/config/pricing";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
 
@@ -68,12 +68,15 @@ export async function POST(request: Request) {
     const db = getAdminDb();
     const recruiterRef = db.collection("recruiterProfiles").doc(recruiterId);
 
+    const expiresAt = Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
+
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(recruiterRef);
       if (!snap.exists) throw new Error("Recruiter profile not found");
       tx.update(recruiterRef, {
         jobPostCredits: FieldValue.increment(plan.credits),
         totalSpent: FieldValue.increment(Math.round(order.order_amount * 100)),
+        creditsExpiresAt: expiresAt,
       });
     });
 

@@ -12,15 +12,20 @@ import {
   sendMessage,
   markConversationRead,
 } from "@/lib/firebase/firestore";
-import { Conversation, Message } from "@/types";
+import { Conversation, Message, RecruiterProfile } from "@/types";
 import { timeAgo } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { MessageSquare, Send, Search, ArrowLeft } from "lucide-react";
+import { MessageSquare, Send, Search, ArrowLeft, AlertCircle } from "lucide-react";
 
-// ScrollArea may not exist — use a plain div with overflow instead
+function hasValidCredits(profile: RecruiterProfile | null): boolean {
+  if (!profile || profile.jobPostCredits <= 0) return false;
+  if (!profile.creditsExpiresAt) return false;
+  return (profile.creditsExpiresAt as any).toDate() > new Date();
+}
+
 function ChatPage() {
   const { user, userDoc } = useAuth();
   const router = useRouter();
@@ -33,12 +38,16 @@ function ChatPage() {
   const [sending, setSending] = useState(false);
   const [search, setSearch] = useState("");
   const [companyName, setCompanyName] = useState("");
+  const [recruiterProfile, setRecruiterProfile] = useState<RecruiterProfile | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Load company name once
+  // Load recruiter profile (credits + expiry)
   useEffect(() => {
     if (!user) return;
-    getRecruiterProfile(user.uid).then((p) => setCompanyName(p?.companyName ?? ""));
+    getRecruiterProfile(user.uid).then((p) => {
+      setRecruiterProfile(p);
+      setCompanyName(p?.companyName ?? "");
+    });
   }, [user]);
 
   // Subscribe to all conversations for this recruiter
@@ -252,21 +261,36 @@ function ChatPage() {
 
             {/* Input */}
             <div className="border-t px-4 py-3">
-              <form
-                onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-                className="flex gap-2"
-              >
-                <Input
-                  placeholder="Type a message…"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                  className="flex-1"
-                />
-                <Button type="submit" size="icon" disabled={!input.trim() || sending}>
-                  <Send className="h-4 w-4" />
-                </Button>
-              </form>
+              {!hasValidCredits(recruiterProfile) ? (
+                <div className="flex items-center gap-2 rounded-md bg-amber-50 border border-amber-200 px-3 py-2.5 text-sm text-amber-800">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>
+                    {recruiterProfile && recruiterProfile.jobPostCredits > 0
+                      ? "Your credits have expired. "
+                      : "You have no credits. "}
+                    <a href="/recruiter/pricing" className="font-semibold underline underline-offset-2">
+                      Buy credits
+                    </a>{" "}
+                    to send messages.
+                  </span>
+                </div>
+              ) : (
+                <form
+                  onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+                  className="flex gap-2"
+                >
+                  <Input
+                    placeholder="Type a message…"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                    className="flex-1"
+                  />
+                  <Button type="submit" size="icon" disabled={!input.trim() || sending}>
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </form>
+              )}
             </div>
           </>
         )}

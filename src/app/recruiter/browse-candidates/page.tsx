@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { getAllCandidateProfiles, getAllUsers, incrementProfileView } from "@/lib/firebase/firestore";
-import { CandidateProfile, UserDoc, JobType } from "@/types";
+import { useAuth } from "@/context/AuthContext";
+import { getAllCandidateProfiles, getAllUsers, incrementProfileView, getRecruiterProfile } from "@/lib/firebase/firestore";
+import { CandidateProfile, UserDoc, JobType, RecruiterProfile } from "@/types";
 import { parseLocation, formatCurrency } from "@/lib/utils";
 import { WORLD_LOCATIONS } from "@/lib/data/locations";
 import { Badge } from "@/components/ui/badge";
@@ -69,10 +70,18 @@ interface Candidate extends CandidateProfile {
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
+function hasValidCredits(profile: RecruiterProfile | null): boolean {
+  if (!profile || profile.jobPostCredits <= 0) return false;
+  if (!profile.creditsExpiresAt) return false;
+  return (profile.creditsExpiresAt as any).toDate() > new Date();
+}
+
 export default function BrowseCandidatesPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [recruiterProfile, setRecruiterProfile] = useState<RecruiterProfile | null>(null);
 
   // Filter state
   const [titleInput, setTitleInput] = useState("");
@@ -85,6 +94,10 @@ export default function BrowseCandidatesPage() {
   const [activeCountry, setActiveCountry] = useState("");
   const [activeCity, setActiveCity] = useState("");
   const [activeExperience, setActiveExperience] = useState("any");
+
+  useEffect(() => {
+    if (user) getRecruiterProfile(user.uid).then(setRecruiterProfile).catch(() => {});
+  }, [user]);
 
   useEffect(() => {
     async function load() {
@@ -364,36 +377,49 @@ export default function BrowseCandidatesPage() {
                   )}
 
                   {/* Actions */}
-                  <div className="mt-auto flex items-center gap-2 pt-1">
-                    <Button
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => {
-                        incrementProfileView(c.uid).catch(() => {});
-                        router.push(
-                          `/recruiter/messages?start=${c.uid}&name=${encodeURIComponent(c.displayName)}`
-                        );
-                      }}
-                    >
-                      <MessageSquare className="mr-1.5 h-3.5 w-3.5" /> Message
-                    </Button>
-                    {c.resumeURL && (
+                  <div className="mt-auto flex flex-col gap-2 pt-1">
+                    {!hasValidCredits(recruiterProfile) && (
+                      <p className="text-center text-xs text-amber-600">
+                        <a href="/recruiter/pricing" className="underline underline-offset-2">
+                          {recruiterProfile && recruiterProfile.jobPostCredits > 0
+                            ? "Your credits have expired — renew to message candidates"
+                            : "Purchase credits to message candidates"}
+                        </a>
+                      </p>
+                    )}
+                    <div className="flex items-center gap-2">
                       <Button
                         size="sm"
-                        variant="outline"
                         className="flex-1"
-                        asChild
-                        onClick={() => incrementProfileView(c.uid).catch(() => {})}
+                        disabled={!hasValidCredits(recruiterProfile)}
+                        onClick={() => {
+                          if (!hasValidCredits(recruiterProfile)) return;
+                          incrementProfileView(c.uid).catch(() => {});
+                          router.push(
+                            `/recruiter/messages?start=${c.uid}&name=${encodeURIComponent(c.displayName)}`
+                          );
+                        }}
                       >
-                        <a
-                          href={c.resumeURL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <FileText className="mr-1.5 h-3.5 w-3.5" /> Resume
-                        </a>
+                        <MessageSquare className="mr-1.5 h-3.5 w-3.5" /> Message
                       </Button>
-                    )}
+                      {c.resumeURL && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          asChild
+                          onClick={() => incrementProfileView(c.uid).catch(() => {})}
+                        >
+                          <a
+                            href={c.resumeURL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <FileText className="mr-1.5 h-3.5 w-3.5" /> Resume
+                          </a>
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
