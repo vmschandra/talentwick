@@ -30,6 +30,7 @@ import {
   JobFilters,
   Notification,
   NotificationType,
+  Transaction,
   Conversation,
   Message,
 } from "@/types";
@@ -424,6 +425,19 @@ export async function getAllTransactions(cap = 200) {
     query(collection(db, "transactions"), orderBy("createdAt", "desc"), limit(cap))
   );
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function getRecruiterTransactions(recruiterId: string): Promise<Transaction[]> {
+  if (!firebaseConfigured) return [];
+  const snap = await getDocs(
+    query(
+      collection(db, "transactions"),
+      where("recruiterId", "==", recruiterId),
+      orderBy("createdAt", "desc"),
+      limit(100)
+    )
+  );
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Transaction));
 }
 
 // ─── Notifications (real-time) ───────────────────────────

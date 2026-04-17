@@ -11,6 +11,7 @@ import {
   Briefcase,
   CreditCard,
   Users,
+  Receipt,
 } from "lucide-react";
 
 const recruiterLinks = [
@@ -20,6 +21,7 @@ const recruiterLinks = [
   { href: "/recruiter/my-jobs", label: "My Jobs", icon: <Briefcase className="h-4 w-4" /> },
   { href: "/recruiter/browse-candidates", label: "Browse Candidates", icon: <Users className="h-4 w-4" /> },
   { href: "/recruiter/pricing", label: "Buy Credits", icon: <CreditCard className="h-4 w-4" /> },
+  { href: "/recruiter/transactions", label: "Transaction History", icon: <Receipt className="h-4 w-4" /> },
 ];
 
 export default function RecruiterLayout({ children }: { children: React.ReactNode }) {
