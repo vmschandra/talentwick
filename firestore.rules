@@ -99,5 +99,29 @@ service cloud.firestore {
       allow read, update: if isSignedIn() &&
         request.auth.uid == resource.data.userId;
     }
+
+    // ── Conversations ─────────────────────────────────────────────────────
+    match /conversations/{convId} {
+      // Participants can read and update (lastMessage, unreadCount, etc.)
+      allow read, update: if isSignedIn() && (
+        request.auth.uid == resource.data.candidateId ||
+        request.auth.uid == resource.data.recruiterId ||
+        isAdmin()
+      );
+      // Only a recruiter can start a new conversation (as the recruiter participant)
+      allow create: if isSignedIn() && (
+        request.auth.uid == request.resource.data.recruiterId ||
+        request.auth.uid == request.resource.data.candidateId
+      );
+
+      // Messages subcollection — participants only
+      match /messages/{msgId} {
+        allow read, create: if isSignedIn() && (
+          request.auth.uid == get(/databases/$(database)/documents/conversations/$(convId)).data.candidateId ||
+          request.auth.uid == get(/databases/$(database)/documents/conversations/$(convId)).data.recruiterId ||
+          isAdmin()
+        );
+      }
+    }
   }
 }
