@@ -8,9 +8,10 @@ import {
   getRecruiterJobs,
   getAllCandidateProfiles,
   getRecruiterApplications,
+  getRecruiterProfile,
 } from "@/lib/firebase/firestore";
 import { getRecruiterCredits } from "@/lib/payments/credit-service";
-import { CandidateProfile, Job, Application } from "@/types";
+import { CandidateProfile, Job, Application, RecruiterProfile } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -62,6 +63,7 @@ export default function RecruiterDashboard() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [candidates, setCandidates] = useState<ScoredCandidate[]>([]);
   const [credits, setCredits] = useState(0);
+  const [recruiterProfile, setRecruiterProfile] = useState<RecruiterProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -69,21 +71,24 @@ export default function RecruiterDashboard() {
     if (!user || !userDoc) { router.push("/login"); return; }
 
     async function fetchAll() {
-      const [jobsRes, appsRes, candidatesRes, creditsRes] = await Promise.allSettled([
+      const [jobsRes, appsRes, candidatesRes, creditsRes, profileRes] = await Promise.allSettled([
         getRecruiterJobs(user!.uid),
         getRecruiterApplications(user!.uid),
         getAllCandidateProfiles(),
         getRecruiterCredits(user!.uid),
+        getRecruiterProfile(user!.uid),
       ]);
 
       const myJobs = jobsRes.status === "fulfilled" ? jobsRes.value : [];
       const myApps = appsRes.status === "fulfilled" ? appsRes.value : [];
       const allCandidates = candidatesRes.status === "fulfilled" ? candidatesRes.value : [];
       const myCredits = creditsRes.status === "fulfilled" ? creditsRes.value : 0;
+      const profile = profileRes.status === "fulfilled" ? profileRes.value : null;
 
       setJobs(myJobs);
       setApplications(myApps);
       setCredits(myCredits);
+      setRecruiterProfile(profile);
 
       const jobSkills = new Set<string>();
       myJobs
@@ -130,9 +135,17 @@ export default function RecruiterDashboard() {
 
       {/* Greeting */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Welcome back{userDoc.displayName ? `, ${userDoc.displayName.split(" ")[0]}` : ""}
-        </h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold tracking-tight">
+            Welcome back{userDoc.displayName ? `, ${userDoc.displayName.split(" ")[0]}` : ""}
+          </h1>
+          {recruiterProfile && recruiterProfile.jobPostCredits > 0 && recruiterProfile.creditsExpiresAt &&
+            (recruiterProfile.creditsExpiresAt as any).toDate() > new Date() && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-yellow-300 bg-yellow-50 px-2.5 py-0.5 text-xs font-semibold text-yellow-800">
+              <Sparkles className="h-3 w-3" /> Pro Account
+            </span>
+          )}
+        </div>
         <p className="mt-1 text-sm text-muted-foreground">
           Here&apos;s an overview of your hiring activity.
         </p>

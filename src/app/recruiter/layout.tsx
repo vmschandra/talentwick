@@ -2,8 +2,10 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
+import { getRecruiterProfile } from "@/lib/firebase/firestore";
+import { RecruiterProfile } from "@/types";
 import {
   LayoutDashboard,
   Building2,
@@ -24,16 +26,27 @@ const recruiterLinks = [
   { href: "/recruiter/transactions", label: "Transaction History", icon: <Receipt className="h-4 w-4" /> },
 ];
 
+function isPro(profile: RecruiterProfile | null): boolean {
+  if (!profile || profile.jobPostCredits <= 0) return false;
+  if (!profile.creditsExpiresAt) return false;
+  return (profile.creditsExpiresAt as any).toDate() > new Date();
+}
+
 export default function RecruiterLayout({ children }: { children: React.ReactNode }) {
-  const { userDoc, loading } = useAuth();
+  const { user, userDoc, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [recruiterProfile, setRecruiterProfile] = useState<RecruiterProfile | null>(null);
 
   useEffect(() => {
     if (!loading && userDoc?.role !== "recruiter") {
       router.push(`/login?role=recruiter&redirect=${encodeURIComponent(pathname)}`);
     }
   }, [loading, userDoc, router, pathname]);
+
+  useEffect(() => {
+    if (user) getRecruiterProfile(user.uid).then(setRecruiterProfile).catch(() => {});
+  }, [user]);
 
   if (loading) {
     return (
@@ -47,7 +60,7 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)]">
-      <Sidebar links={recruiterLinks} />
+      <Sidebar links={recruiterLinks} isPro={isPro(recruiterProfile)} />
       <div className="flex-1 p-6 lg:p-8">{children}</div>
     </div>
   );

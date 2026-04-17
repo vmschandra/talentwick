@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { Sparkles } from "lucide-react";
 
 interface SidebarLink {
   href: string;
@@ -12,14 +13,15 @@ interface SidebarLink {
 
 interface SidebarProps {
   links: SidebarLink[];
+  isPro?: boolean;
 }
 
-export default function Sidebar({ links }: SidebarProps) {
+export default function Sidebar({ links, isPro }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-64 shrink-0 border-r bg-muted/30 lg:block">
-      <nav className="flex flex-col gap-1 p-4">
+    <aside className="hidden w-64 shrink-0 border-r bg-muted/30 lg:flex lg:flex-col">
+      <nav className="flex flex-col gap-1 p-4 flex-1">
         {links.map((link) => (
           <Link
             key={link.href}
@@ -36,6 +38,16 @@ export default function Sidebar({ links }: SidebarProps) {
           </Link>
         ))}
       </nav>
+
+      {isPro && (
+        <div className="m-4 mt-0 flex items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-3 py-2.5">
+          <Sparkles className="h-4 w-4 shrink-0 text-yellow-600" />
+          <div>
+            <p className="text-xs font-semibold text-yellow-800">Pro Account</p>
+            <p className="text-[11px] text-yellow-700 leading-tight">Active credits</p>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
