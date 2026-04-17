@@ -529,19 +529,37 @@ export async function sendMessage(
   });
 }
 
+export async function getConversationById(convId: string): Promise<Conversation | null> {
+  if (!firebaseConfigured) return null;
+  const snap = await getDoc(doc(db, "conversations", convId));
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...snap.data() } as Conversation;
+}
+
 export function subscribeToConversations(
   userId: string,
   callback: (conversations: Conversation[]) => void
 ): () => void {
   if (!firebaseConfigured) return () => {};
+  // No orderBy — avoids composite index requirement. Sort client-side instead.
   const q = query(
     collection(db, "conversations"),
-    where("participantIds", "array-contains", userId),
-    orderBy("lastMessageAt", "desc")
+    where("participantIds", "array-contains", userId)
   );
-  return onSnapshot(q, (snap) => {
-    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Conversation)));
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      const convs = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() } as Conversation))
+        .sort((a, b) => {
+          const at = a.lastMessageAt?.toDate?.()?.getTime() ?? 0;
+          const bt = b.lastMessageAt?.toDate?.()?.getTime() ?? 0;
+          return bt - at;
+        });
+      callback(convs);
+    },
+    (err) => console.error("[subscribeToConversations error]", err.message)
+  );
 }
 
 export function subscribeToMessages(

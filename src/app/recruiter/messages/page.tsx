@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
-import { getRecruiterProfile } from "@/lib/firebase/firestore";
 import {
+  getRecruiterProfile,
   subscribeToConversations,
   subscribeToMessages,
-  getOrCreateConversation,
+  getConversationById,
   sendMessage,
   markConversationRead,
 } from "@/lib/firebase/firestore";
@@ -29,7 +29,6 @@ function hasValidCredits(profile: RecruiterProfile | null): boolean {
 
 function ChatPage() {
   const { user, userDoc } = useAuth();
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -64,29 +63,41 @@ function ChatPage() {
     const candidateName = searchParams.get("name") ?? "Candidate";
     if (!startId || !user || !userDoc) return;
 
-    user.getIdToken().then((token) =>
-      fetch("/api/conversations/get-or-create", {
+    async function openConversation() {
+      const token = await user!.getIdToken();
+      const res = await fetch("/api/conversations/get-or-create", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           candidateId: startId,
           candidateName,
-          recruiterName: userDoc.displayName ?? "Recruiter",
+          recruiterName: userDoc!.displayName ?? "Recruiter",
           companyName,
         }),
-      }).then((r) => r.json())
-    ).then((data) => {
+      });
+      const data = await res.json();
       if (data.error) throw new Error(data.error);
-      setActiveId(data.conversationId);
-    }).catch((err: unknown) => {
+
+      const convId: string = data.conversationId;
+
+      // Immediately inject the conversation into state so the chat panel opens
+      // even before the Firestore subscription fires
+      const conv = await getConversationById(convId);
+      if (conv) {
+        setConversations((prev) =>
+          prev.find((c) => c.id === convId) ? prev : [conv, ...prev]
+        );
+      }
+      setActiveId(convId);
+    }
+
+    openConversation().catch((err: unknown) => {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error("[Messages] get-or-create failed:", msg);
+      console.error("[Messages] openConversation failed:", msg);
       toast.error("Could not open conversation: " + msg, { duration: 8000 });
     });
-  }, [searchParams, user, userDoc, companyName, router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, user, userDoc]);
 
   // Subscribe to messages in the active conversation
   useEffect(() => {
