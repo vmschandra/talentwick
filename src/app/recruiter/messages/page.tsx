@@ -71,9 +71,10 @@ function ChatPage() {
     }).then((convId) => {
       setActiveId(convId);
       router.replace("/recruiter/messages");
-    }).catch((err) => {
-      console.error("[Messages] getOrCreateConversation failed:", err);
-      toast.error("Could not open conversation. Please try again.");
+    }).catch((err: unknown) => {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[Messages] getOrCreateConversation failed:", msg);
+      toast.error(msg, { duration: 10000 });
     });
   }, [searchParams, user, userDoc, companyName, router]);
 
