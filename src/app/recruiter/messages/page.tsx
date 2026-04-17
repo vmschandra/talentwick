@@ -64,17 +64,28 @@ function ChatPage() {
     const candidateName = searchParams.get("name") ?? "Candidate";
     if (!startId || !user || !userDoc) return;
 
-    getOrCreateConversation(startId, user.uid, {
-      candidateName,
-      recruiterName: userDoc.displayName ?? "Recruiter",
-      companyName,
-    }).then((convId) => {
-      setActiveId(convId);
+    user.getIdToken().then((token) =>
+      fetch("/api/conversations/get-or-create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          candidateId: startId,
+          candidateName,
+          recruiterName: userDoc.displayName ?? "Recruiter",
+          companyName,
+        }),
+      }).then((r) => r.json())
+    ).then((data) => {
+      if (data.error) throw new Error(data.error);
+      setActiveId(data.conversationId);
       router.replace("/recruiter/messages");
     }).catch((err: unknown) => {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error("[Messages] getOrCreateConversation failed:", msg);
-      toast.error(msg, { duration: 10000 });
+      console.error("[Messages] get-or-create failed:", msg);
+      toast.error("Could not open conversation: " + msg, { duration: 8000 });
     });
   }, [searchParams, user, userDoc, companyName, router]);
 

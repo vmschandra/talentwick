@@ -102,19 +102,19 @@ service cloud.firestore {
 
     // ── Conversations ─────────────────────────────────────────────────────
     match /conversations/{convId} {
-      // Read/update: any participant (array field used by the subscription query)
+      // Participants can read and update (lastMessage, unreadCount, etc.)
       allow read, update: if isSignedIn() && (
-        request.auth.uid in resource.data.participantIds || isAdmin()
+        request.auth.uid == resource.data.candidateId ||
+        request.auth.uid == resource.data.recruiterId ||
+        isAdmin()
       );
-      // Create: authenticated user must be listed as a participant
-      allow create: if isSignedIn() && (
-        request.auth.uid in request.resource.data.participantIds
-      );
+      // Writes (create) handled server-side via Admin SDK — no client create needed
 
       // Messages subcollection — participants only
       match /messages/{msgId} {
         allow read, create: if isSignedIn() && (
-          request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participantIds ||
+          request.auth.uid == get(/databases/$(database)/documents/conversations/$(convId)).data.candidateId ||
+          request.auth.uid == get(/databases/$(database)/documents/conversations/$(convId)).data.recruiterId ||
           isAdmin()
         );
       }
