@@ -81,7 +81,6 @@ function ChatPage() {
     ).then((data) => {
       if (data.error) throw new Error(data.error);
       setActiveId(data.conversationId);
-      router.replace("/recruiter/messages");
     }).catch((err: unknown) => {
       const msg = err instanceof Error ? err.message : String(err);
       console.error("[Messages] get-or-create failed:", msg);
