@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { getRecruiterProfile } from "@/lib/firebase/firestore";
 import {
@@ -69,7 +70,10 @@ function ChatPage() {
       companyName,
     }).then((convId) => {
       setActiveId(convId);
-      router.replace("/recruiter/messages"); // clean up URL
+      router.replace("/recruiter/messages");
+    }).catch((err) => {
+      console.error("[Messages] getOrCreateConversation failed:", err);
+      toast.error("Could not open conversation. Please try again.");
     });
   }, [searchParams, user, userDoc, companyName, router]);
 
