@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useAuth } from "@/context/AuthContext";
 import {
   subscribeToConversations,
   subscribeToMessages,
-  getOrCreateConversation,
   sendMessage,
   markConversationRead,
 } from "@/lib/firebase/firestore";
@@ -21,7 +20,6 @@ import { MessageSquare, Send, Search, ArrowLeft } from "lucide-react";
 
 function ChatPage() {
   const { user, userDoc } = useAuth();
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -39,21 +37,11 @@ function ChatPage() {
     return unsub;
   }, [user]);
 
-  // Handle ?start=recruiterUid&name=RecruiterName query param
+  // Open a specific conversation via ?convId= param (e.g. from a notification link)
   useEffect(() => {
-    const startId = searchParams.get("start");
-    const recruiterName = searchParams.get("name") ?? "Recruiter";
-    if (!startId || !user || !userDoc) return;
-
-    getOrCreateConversation(user.uid, startId, {
-      candidateName: userDoc.displayName ?? "Candidate",
-      recruiterName,
-      companyName: "",
-    }).then((convId) => {
-      setActiveId(convId);
-      router.replace("/candidate/messages");
-    });
-  }, [searchParams, user, userDoc, router]);
+    const convId = searchParams.get("convId");
+    if (convId) setActiveId(convId);
+  }, [searchParams]);
 
   // Subscribe to messages in the active conversation
   useEffect(() => {
