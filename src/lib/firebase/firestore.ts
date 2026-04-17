@@ -410,6 +410,42 @@ export async function markAllNotificationsRead(userId: string): Promise<void> {
   await Promise.all(snap.docs.map((d) => updateDoc(d.ref, { read: true })));
 }
 
+// Used by the bell — marks everything except new_message notifications as read,
+// so the Messages badge is unaffected when the notifications dropdown opens.
+export async function markNonMessageNotificationsRead(userId: string): Promise<void> {
+  if (!firebaseConfigured) return;
+  const snap = await getDocs(
+    query(
+      collection(db, "notifications"),
+      where("userId", "==", userId),
+      where("read", "==", false)
+    )
+  );
+  const toMark = snap.docs.filter((d) => d.data().type !== "new_message");
+  await Promise.all(toMark.map((d) => updateDoc(d.ref, { read: true })));
+}
+
+// Marks all unread new_message notifications for a specific conversation as read.
+// Queries by userId only to avoid a composite index, then filters client-side.
+export async function markMessageNotificationsRead(
+  userId: string,
+  conversationId: string
+): Promise<void> {
+  if (!firebaseConfigured) return;
+  const snap = await getDocs(
+    query(collection(db, "notifications"), where("userId", "==", userId))
+  );
+  const toMark = snap.docs.filter((d) => {
+    const data = d.data();
+    return (
+      data.type === "new_message" &&
+      data.conversationId === conversationId &&
+      !data.read
+    );
+  });
+  await Promise.all(toMark.map((d) => updateDoc(d.ref, { read: true })));
+}
+
 // ─── Admin Helpers ───────────────────────────────────────
 // These are capped to prevent accidental unbounded reads on large datasets.
 // Move to paginated API routes backed by the Admin SDK for production scale.

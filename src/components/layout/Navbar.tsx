@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { logout } from "@/lib/firebase/auth";
-import { subscribeToNotifications, markNotificationRead, markAllNotificationsRead, subscribeToConversations } from "@/lib/firebase/firestore";
-import { Notification, Conversation } from "@/types";
+import { subscribeToNotifications, markNotificationRead, markNonMessageNotificationsRead } from "@/lib/firebase/firestore";
+import { Notification } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -66,7 +66,6 @@ export default function Navbar() {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -74,17 +73,14 @@ export default function Navbar() {
     return unsub;
   }, [user]);
 
-  useEffect(() => {
-    if (!user) return;
-    const unsub = subscribeToConversations(user.uid, setConversations);
-    return unsub;
-  }, [user]);
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
-  const unreadMessages = conversations.reduce(
-    (sum, c) => sum + (user ? (c.unreadCount?.[user.uid] ?? 0) : 0),
-    0
-  );
+  // Bell: all non-message notifications
+  const unreadCount = notifications.filter(
+    (n) => !n.read && n.type !== "new_message"
+  ).length;
+  // Messages icon: only new_message notifications
+  const unreadMessages = notifications.filter(
+    (n) => !n.read && n.type === "new_message"
+  ).length;
 
   const handleLogout = async () => {
     await logout();
@@ -187,8 +183,10 @@ export default function Navbar() {
               {/* Notifications — all roles */}
               <DropdownMenu onOpenChange={(open) => {
                 if (open && user && unreadCount > 0) {
-                  markAllNotificationsRead(user.uid).then(() => {
-                    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+                  markNonMessageNotificationsRead(user.uid).then(() => {
+                    setNotifications((prev) =>
+                      prev.map((n) => (n.type === "new_message" ? n : { ...n, read: true }))
+                    );
                   }).catch(() => {});
                 }
               }}>
@@ -208,10 +206,10 @@ export default function Navbar() {
                 <DropdownMenuContent align="end" className="w-80">
                   <DropdownMenuLabel>Notifications</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {notifications.length === 0 ? (
+                  {notifications.filter((n) => n.type !== "new_message").length === 0 ? (
                     <p className="p-4 text-center text-sm text-muted-foreground">No notifications</p>
                   ) : (
-                    notifications.slice(0, 5).map((n) => (
+                    notifications.filter((n) => n.type !== "new_message").slice(0, 5).map((n) => (
                       <DropdownMenuItem
                         key={n.id}
                         onClick={() => handleNotifClick(n)}

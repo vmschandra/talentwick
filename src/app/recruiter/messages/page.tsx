@@ -12,6 +12,7 @@ import {
   getConversationById,
   sendMessage,
   markConversationRead,
+  markMessageNotificationsRead,
 } from "@/lib/firebase/firestore";
 import { Conversation, Message, RecruiterProfile } from "@/types";
 import { timeAgo } from "@/lib/utils";
@@ -107,10 +108,11 @@ function ChatPage() {
     return unsub;
   }, [activeId]);
 
-  // Mark as read when opening a conversation
+  // Mark conversation + message notifications as read when opening a conversation
   useEffect(() => {
     if (!activeId || !user) return;
     markConversationRead(activeId, user.uid).catch(() => {});
+    markMessageNotificationsRead(user.uid, activeId).catch(() => {});
   }, [activeId, user]);
 
   // Auto-scroll to bottom when new messages arrive
@@ -124,15 +126,30 @@ function ChatPage() {
     if (!conv) return;
 
     setSending(true);
+    const text = input;
     try {
       await sendMessage(
         activeId,
         user.uid,
         userDoc.displayName ?? "Recruiter",
-        input,
+        text,
         conv.candidateId
       );
       setInput("");
+      // Fire-and-forget: notify the candidate via server-side notification
+      user.getIdToken().then((token) =>
+        fetch("/api/messages/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            conversationId: activeId,
+            recipientId: conv.candidateId,
+            recipientRole: "candidate",
+            senderName: userDoc.displayName ?? "Recruiter",
+            previewText: text,
+          }),
+        })
+      ).catch(() => {});
     } finally {
       setSending(false);
     }

@@ -170,7 +170,8 @@ export type NotificationType =
   | "credits_low"
   | "job_expiring"
   | "credits_added"
-  | "welcome";
+  | "welcome"
+  | "new_message";
 
 export interface Notification {
   id: string;
@@ -179,6 +180,7 @@ export interface Notification {
   title: string;
   message: string;
   link?: string;
+  conversationId?: string;
   read: boolean;
   createdAt: Timestamp;
 }
