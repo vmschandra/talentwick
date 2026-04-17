@@ -11,22 +11,32 @@ function getAdminApp(): App {
     return _app;
   }
 
-  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-
-  // Prefer base64-encoded key (immune to Vercel whitespace/escaping corruption).
-  // Fall back to raw key with common escaping fixes.
-  let privateKey: string | undefined;
-  if (process.env.FIREBASE_ADMIN_PRIVATE_KEY_BASE64) {
-    privateKey = Buffer.from(process.env.FIREBASE_ADMIN_PRIVATE_KEY_BASE64, "base64").toString("utf8");
-  } else {
-    privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY
-      ?.replace(/^["']|["']$/g, "")  // strip surrounding quotes
-      ?.replace(/\\n/g, "\n");        // convert literal \n to real newlines
+  // Option 1 (recommended): full service account JSON pasted as one env var.
+  // JSON.parse handles the \n escaping in private_key correctly.
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+    _app = initializeApp({ credential: cert(sa) });
+    return _app;
   }
 
+  // Option 2: base64-encoded private key (immune to Vercel escaping issues)
+  if (process.env.FIREBASE_ADMIN_PRIVATE_KEY_BASE64) {
+    const privateKey = Buffer.from(process.env.FIREBASE_ADMIN_PRIVATE_KEY_BASE64, "base64").toString("utf8");
+    const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID!;
+    const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL!;
+    _app = initializeApp({ credential: cert({ projectId, clientEmail, privateKey }) });
+    return _app;
+  }
+
+  // Option 3: raw key with common Vercel escaping fixes (fallback)
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY
+    ?.replace(/^["']|["']$/g, "")
+    ?.replace(/\\n/g, "\n");
+
   if (!projectId || !clientEmail || !privateKey) {
-    throw new Error("Firebase Admin SDK is not configured. Set FIREBASE_ADMIN_* env vars.");
+    throw new Error("Firebase Admin SDK is not configured. Set FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_ADMIN_* env vars.");
   }
 
   _app = initializeApp({ credential: cert({ projectId, clientEmail, privateKey }) });
