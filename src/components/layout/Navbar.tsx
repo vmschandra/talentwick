@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { logout } from "@/lib/firebase/auth";
-import { subscribeToNotifications, markNotificationRead, markAllNotificationsRead } from "@/lib/firebase/firestore";
-import { Notification } from "@/types";
+import { subscribeToNotifications, markNotificationRead, markAllNotificationsRead, subscribeToConversations } from "@/lib/firebase/firestore";
+import { Notification, Conversation } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -41,15 +41,22 @@ function NavIconButton({
   icon,
   label,
   onClick,
+  badge,
 }: {
   icon: React.ReactNode;
   label: string;
   onClick: () => void;
+  badge?: number;
 }) {
   return (
     <button onClick={onClick} className={NAV_BTN}>
       <span className="flex h-5 w-5 items-center justify-center">{icon}</span>
       <span className="text-[11px] font-medium leading-none">{label}</span>
+      {badge != null && badge > 0 && (
+        <span className="absolute right-1.5 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
+          {badge > 99 ? "99" : badge}
+        </span>
+      )}
     </button>
   );
 }
@@ -59,6 +66,7 @@ export default function Navbar() {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -66,7 +74,17 @@ export default function Navbar() {
     return unsub;
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
+    const unsub = subscribeToConversations(user.uid, setConversations);
+    return unsub;
+  }, [user]);
+
   const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadMessages = conversations.reduce(
+    (sum, c) => sum + (user ? (c.unreadCount?.[user.uid] ?? 0) : 0),
+    0
+  );
 
   const handleLogout = async () => {
     await logout();
@@ -162,6 +180,7 @@ export default function Navbar() {
                   icon={<MessageSquare className="h-5 w-5" />}
                   label="Messages"
                   onClick={() => router.push(messagesPath)}
+                  badge={unreadMessages}
                 />
               )}
 
