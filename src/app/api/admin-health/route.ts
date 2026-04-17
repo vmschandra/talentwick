@@ -22,10 +22,19 @@ export async function GET() {
     }
   } else if (hasRawKey) {
     const raw = process.env.FIREBASE_ADMIN_PRIVATE_KEY!;
-    if (raw.startsWith("-----BEGIN")) keyShape = "raw PEM (ok)";
-    else if (raw.startsWith('"-----BEGIN')) keyShape = "raw PEM with leading quote (broken)";
-    else if (raw.includes("\\n")) keyShape = "raw with literal \\n (needs replace)";
-    else keyShape = `raw unknown: ${raw.slice(0, 30)}`;
+    const hasRealNewlines = raw.includes("\n");           // actual newline character
+    const hasLiteralNewlines = raw.includes("\\n");       // literal backslash-n string
+    const endsCorrectly = raw.trimEnd().endsWith("-----");
+    const length = raw.length;
+    if (!raw.startsWith("-----BEGIN")) {
+      keyShape = `bad start: ${raw.slice(0, 30)}`;
+    } else if (!hasRealNewlines && !hasLiteralNewlines) {
+      keyShape = `single-line PEM, no newlines (broken), len=${length}`;
+    } else if (hasLiteralNewlines && !hasRealNewlines) {
+      keyShape = `PEM with literal \\n only (broken), len=${length}`;
+    } else {
+      keyShape = `PEM ok, realNewlines=${hasRealNewlines}, endsCorrectly=${endsCorrectly}, len=${length}`;
+    }
   }
 
   const envDiag = { projectId, clientEmail, keyShape, hasBase64Key, hasRawKey };
