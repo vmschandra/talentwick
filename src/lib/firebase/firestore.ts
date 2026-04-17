@@ -399,6 +399,17 @@ export async function markNotificationRead(notifId: string): Promise<void> {
   await updateDoc(doc(db, "notifications", notifId), { read: true });
 }
 
+export async function markAllNotificationsRead(userId: string): Promise<void> {
+  if (!firebaseConfigured) return;
+  const q = query(
+    collection(db, "notifications"),
+    where("userId", "==", userId),
+    where("read", "==", false)
+  );
+  const snap = await getDocs(q);
+  await Promise.all(snap.docs.map((d) => updateDoc(d.ref, { read: true })));
+}
+
 // ─── Admin Helpers ───────────────────────────────────────
 // These are capped to prevent accidental unbounded reads on large datasets.
 // Move to paginated API routes backed by the Admin SDK for production scale.

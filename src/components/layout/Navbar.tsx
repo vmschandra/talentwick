@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { logout } from "@/lib/firebase/auth";
-import { subscribeToNotifications, markNotificationRead } from "@/lib/firebase/firestore";
+import { subscribeToNotifications, markNotificationRead, markAllNotificationsRead } from "@/lib/firebase/firestore";
 import { Notification } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -166,7 +166,13 @@ export default function Navbar() {
               )}
 
               {/* Notifications — all roles */}
-              <DropdownMenu>
+              <DropdownMenu onOpenChange={(open) => {
+                if (open && user && unreadCount > 0) {
+                  markAllNotificationsRead(user.uid).then(() => {
+                    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+                  }).catch(() => {});
+                }
+              }}>
                 <DropdownMenuTrigger asChild>
                   <button className={NAV_BTN}>
                     <span className="flex h-5 w-5 items-center justify-center">
