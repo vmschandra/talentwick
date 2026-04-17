@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { getRecruiterCredits } from "@/lib/payments/credit-service";
@@ -16,16 +17,28 @@ import {
   Sparkles,
 } from "lucide-react";
 
-export default function PurchaseSuccessPage() {
+function SuccessContent() {
   const { user, loading: authLoading } = useAuth();
+  const searchParams = useSearchParams();
   const [credits, setCredits] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (authLoading || !user) return;
 
-    async function fetchCredits() {
+    async function verifyAndLoad() {
       try {
+        // Verify the order with Cashfree and add credits if not already done
+        const orderId = searchParams.get("order_id");
+        if (orderId) {
+          await fetch("/api/payments/verify-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId }),
+          });
+        }
+
+        // Fetch updated credit balance
         const c = await getRecruiterCredits(user!.uid);
         setCredits(c);
       } catch {
@@ -35,8 +48,8 @@ export default function PurchaseSuccessPage() {
       }
     }
 
-    fetchCredits();
-  }, [user, authLoading]);
+    verifyAndLoad();
+  }, [user, authLoading, searchParams]);
 
   if (authLoading || loading) {
     return (
@@ -61,7 +74,6 @@ export default function PurchaseSuccessPage() {
     <div className="flex min-h-[60vh] items-center justify-center">
       <Card className="w-full max-w-lg">
         <CardContent className="space-y-6 p-10 text-center">
-          {/* Success Icon with decorative elements */}
           <div className="relative mx-auto w-fit">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
               <CheckCircle className="h-10 w-10 text-green-600" />
@@ -78,7 +90,6 @@ export default function PurchaseSuccessPage() {
             </p>
           </div>
 
-          {/* Credit Balance */}
           {credits !== null && (
             <div className="mx-auto inline-flex items-center gap-3 rounded-xl border bg-muted/50 px-6 py-4">
               <CreditCard className="h-6 w-6 text-primary" />
@@ -92,7 +103,6 @@ export default function PurchaseSuccessPage() {
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Button asChild size="lg">
               <Link href="/recruiter/post-job">
@@ -108,5 +118,13 @@ export default function PurchaseSuccessPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function PurchaseSuccessPage() {
+  return (
+    <Suspense>
+      <SuccessContent />
+    </Suspense>
   );
 }
