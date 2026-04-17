@@ -41,9 +41,10 @@ export const cashfreeProvider: PaymentProvider = {
   async createCheckoutSession(params: CreateCheckoutParams): Promise<CheckoutResult> {
     const { plan, recruiterId, customerEmail } = params;
 
-    const appUrl =
+    const appUrl = (
       process.env.NEXT_PUBLIC_APP_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+    ).trim().replace(/\/$/, "");
 
     // Order ID: max 50 chars, alphanumeric + underscore
     const orderId = `TW_${plan.id}_${recruiterId.slice(0, 12)}_${Date.now()}`;
