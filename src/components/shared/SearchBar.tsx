@@ -13,6 +13,7 @@ function AutocompleteInput({
   placeholder,
   icon,
   suggestions,
+  showAllOnFocus = false,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -20,17 +21,18 @@ function AutocompleteInput({
   placeholder: string;
   icon: React.ReactNode;
   suggestions: string[];
+  showAllOnFocus?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   const filtered = useMemo(() => {
-    if (!value.trim()) return [];
+    if (!value.trim()) return showAllOnFocus ? suggestions.slice(0, 100) : [];
     const q = value.toLowerCase();
     return Array.from(new Set(
       suggestions.filter((s) => s.toLowerCase().includes(q))
-    )).slice(0, 8);
-  }, [value, suggestions]);
+    )).slice(0, 100);
+  }, [value, suggestions, showAllOnFocus]);
 
   useEffect(() => {
     function onDown(e: MouseEvent) {
@@ -134,20 +136,21 @@ export default function SearchBar({
         suggestions={titleSuggestions}
       />
       <AutocompleteInput
-        value={city}
-        onChange={setCity}
-        onSelect={(v) => { setCity(v); submit({ city: v }); }}
-        placeholder="City"
-        icon={<MapPin className="h-4 w-4" />}
-        suggestions={citySuggestions}
-      />
-      <AutocompleteInput
         value={country}
         onChange={setCountry}
         onSelect={(v) => { setCountry(v); submit({ country: v }); }}
         placeholder="Country"
         icon={<Globe className="h-4 w-4" />}
         suggestions={countrySuggestions}
+        showAllOnFocus
+      />
+      <AutocompleteInput
+        value={city}
+        onChange={setCity}
+        onSelect={(v) => { setCity(v); submit({ city: v }); }}
+        placeholder="City"
+        icon={<MapPin className="h-4 w-4" />}
+        suggestions={citySuggestions}
       />
 
       <div className="flex shrink-0 gap-2">

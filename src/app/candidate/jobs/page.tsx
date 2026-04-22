@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { getAllJobs } from "@/lib/firebase/firestore";
 import { Job } from "@/types";
 import { parseLocation } from "@/lib/utils";
+import { WORLD_LOCATIONS } from "@/lib/data/locations";
 import SearchBar, { SearchValues } from "@/components/shared/SearchBar";
 import JobCard from "@/components/cards/JobCard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,11 +53,10 @@ function JobsContent() {
     )).sort(),
     [jobs]
   );
+  // Use the full country list so the dropdown works regardless of what jobs exist
   const countrySuggestions = useMemo(
-    () => Array.from(new Set(
-      jobs.map((j) => parseLocation(j.location ?? "").country).filter(Boolean)
-    )).sort(),
-    [jobs]
+    () => Object.keys(WORLD_LOCATIONS).sort(),
+    []
   );
 
   // ── Filter results ──
