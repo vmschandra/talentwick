@@ -24,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
-          <Toaster position="top-right" richColors />
+          <Toaster position="top-center" richColors closeButton duration={Infinity} />
         </AuthProvider>
       </body>
     </html>
