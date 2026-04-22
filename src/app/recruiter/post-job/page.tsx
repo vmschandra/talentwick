@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { getRecruiterProfile, postJobWithCredit } from "@/lib/firebase/firestore";
 import { RecruiterProfile, JobType, WorkMode, ExperienceLevel } from "@/types";
+import { WORLD_LOCATIONS } from "@/lib/data/locations";
+import SearchableSelect from "@/components/shared/SearchableSelect";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -91,6 +93,22 @@ export default function PostJobPage() {
   const [submitting, setSubmitting] = useState(false);
   const [skillInput, setSkillInput] = useState("");
   const [skillTags, setSkillTags] = useState<string[]>([]);
+  const [locationCountry, setLocationCountry] = useState("");
+  const [locationCity, setLocationCity] = useState("");
+
+  const COUNTRIES = Object.keys(WORLD_LOCATIONS).sort();
+
+  function handleCountryChange(country: string) {
+    setLocationCountry(country);
+    setLocationCity("");
+    setValue("location", country, { shouldValidate: true });
+  }
+
+  function handleCityChange(city: string) {
+    setLocationCity(city);
+    const combined = city && locationCountry ? `${city}, ${locationCountry}` : locationCountry || city;
+    setValue("location", combined, { shouldValidate: true });
+  }
 
   const {
     register,
@@ -304,11 +322,28 @@ export default function PostJobPage() {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="location">Location *</Label>
-              <Input id="location" placeholder="San Francisco, CA" {...register("location")} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Country *</Label>
+                <SearchableSelect
+                  value={locationCountry}
+                  onChange={handleCountryChange}
+                  options={COUNTRIES}
+                  placeholder="Search country…"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>City</Label>
+                <SearchableSelect
+                  value={locationCity}
+                  onChange={handleCityChange}
+                  options={locationCountry ? (WORLD_LOCATIONS[locationCountry] ?? []) : []}
+                  placeholder={locationCountry ? "Search city…" : "Select country first"}
+                  disabled={!locationCountry}
+                />
+              </div>
               {errors.location && (
-                <p className="text-sm text-destructive">{errors.location.message}</p>
+                <p className="text-sm text-destructive col-span-2">{errors.location.message}</p>
               )}
             </div>
 

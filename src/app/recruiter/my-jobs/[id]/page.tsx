@@ -6,6 +6,9 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { getJob, updateJob } from "@/lib/firebase/firestore";
 import { Job, JobType, WorkMode, ExperienceLevel } from "@/types";
+import { WORLD_LOCATIONS } from "@/lib/data/locations";
+import { parseLocation } from "@/lib/utils";
+import SearchableSelect from "@/components/shared/SearchableSelect";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -97,6 +100,22 @@ export default function EditJobPage() {
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [skillInput, setSkillInput] = useState("");
   const [skillTags, setSkillTags] = useState<string[]>([]);
+  const [locationCountry, setLocationCountry] = useState("");
+  const [locationCity, setLocationCity] = useState("");
+
+  const COUNTRIES = Object.keys(WORLD_LOCATIONS).sort();
+
+  function handleCountryChange(country: string) {
+    setLocationCountry(country);
+    setLocationCity("");
+    setValue("location", country, { shouldValidate: true });
+  }
+
+  function handleCityChange(city: string) {
+    setLocationCity(city);
+    const combined = city && locationCountry ? `${city}, ${locationCountry}` : locationCountry || city;
+    setValue("location", combined, { shouldValidate: true });
+  }
 
   const {
     register,
@@ -186,6 +205,11 @@ export default function EditJobPage() {
         });
 
         setSkillTags(data.skills || []);
+
+        // Pre-populate country/city dropdowns from stored "City, Country" string
+        const { city, country } = parseLocation(data.location ?? "");
+        setLocationCountry(country || data.location || "");
+        setLocationCity(country ? city : "");
       } catch {
         toast.error("Failed to load job details");
       } finally {
@@ -408,8 +432,22 @@ export default function EditJobPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="location">Location *</Label>
-              <Input id="location" {...register("location")} />
+              <Label>Location *</Label>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <SearchableSelect
+                  value={locationCountry}
+                  onChange={handleCountryChange}
+                  options={COUNTRIES}
+                  placeholder="Search country…"
+                />
+                <SearchableSelect
+                  value={locationCity}
+                  onChange={handleCityChange}
+                  options={locationCountry ? (WORLD_LOCATIONS[locationCountry] ?? []) : []}
+                  placeholder={locationCountry ? "Search city…" : "Select country first"}
+                  disabled={!locationCountry}
+                />
+              </div>
               {errors.location && (
                 <p className="text-sm text-destructive">{errors.location.message}</p>
               )}
