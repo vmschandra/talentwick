@@ -466,6 +466,24 @@ export async function getAllJobs(cap = 200) {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Job));
 }
 
+// Safe for candidate/public use — only queries active, non-expired jobs.
+// getAllJobs has no status filter so Firestore rules block it for non-owners.
+export async function getActiveJobs(cap = 500): Promise<Job[]> {
+  if (!firebaseConfigured) return [];
+  const now = new Date();
+  const snap = await getDocs(
+    query(
+      collection(db, "jobs"),
+      where("status", "==", "active"),
+      orderBy("createdAt", "desc"),
+      limit(cap)
+    )
+  );
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as Job))
+    .filter((j) => !j.expiresAt || j.expiresAt.toDate() > now);
+}
+
 export async function getAllTransactions(cap = 200) {
   if (!firebaseConfigured) return [];
   const snap = await getDocs(

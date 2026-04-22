@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { getAllJobs } from "@/lib/firebase/firestore";
+import { getActiveJobs } from "@/lib/firebase/firestore";
 import { Job } from "@/types";
 import { parseLocation } from "@/lib/utils";
 import { WORLD_LOCATIONS } from "@/lib/data/locations";
@@ -36,8 +36,8 @@ function JobsContent() {
 
   // Load all active jobs once
   useEffect(() => {
-    getAllJobs(500)
-      .then((all) => setJobs((all as Job[]).filter((j) => j.status === "active")))
+    getActiveJobs(500)
+      .then(setJobs)
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
