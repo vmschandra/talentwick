@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 import { getAllCandidateProfiles, getAllUsers, incrementProfileView, getRecruiterProfile } from "@/lib/firebase/firestore";
 import { CandidateProfile, UserDoc, JobType, RecruiterProfile } from "@/types";
 import { parseLocation, formatCurrency } from "@/lib/utils";
@@ -96,7 +97,7 @@ export default function BrowseCandidatesPage() {
   const [activeExperience, setActiveExperience] = useState("any");
 
   useEffect(() => {
-    if (user) getRecruiterProfile(user.uid).then(setRecruiterProfile).catch(() => {});
+    if (user) getRecruiterProfile(user.uid).then(setRecruiterProfile).catch(() => toast.error("Failed to load your account status. Please refresh."));
   }, [user]);
 
   useEffect(() => {

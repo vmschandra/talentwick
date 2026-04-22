@@ -50,7 +50,7 @@ export default function ApplicantsPage() {
       try {
         const [jobData, appData] = await Promise.all([
           getJob(jobId),
-          getJobApplications(jobId),
+          getJobApplications(jobId, user!.uid),
         ]);
 
         if (!jobData) {

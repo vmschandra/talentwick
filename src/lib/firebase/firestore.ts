@@ -308,10 +308,11 @@ export async function getCandidateApplications(candidateId: string): Promise<App
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Application));
 }
 
-export async function getJobApplications(jobId: string): Promise<Application[]> {
+export async function getJobApplications(jobId: string, recruiterId: string): Promise<Application[]> {
   const q = query(
     collection(db, "applications"),
     where("jobId", "==", jobId),
+    where("recruiterId", "==", recruiterId),
     orderBy("appliedAt", "desc")
   );
   const snap = await getDocs(q);

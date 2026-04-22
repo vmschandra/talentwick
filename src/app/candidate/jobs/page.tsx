@@ -12,6 +12,7 @@ import JobCard from "@/components/cards/JobCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Briefcase } from "lucide-react";
+import { toast } from "sonner";
 
 export default function CandidateJobsPage() {
   return (
@@ -38,7 +39,7 @@ function JobsContent() {
   useEffect(() => {
     getActiveJobs(500)
       .then(setJobs)
-      .catch(() => {})
+      .catch(() => toast.error("Failed to load jobs. Please refresh."))
       .finally(() => setLoading(false));
   }, []);
 

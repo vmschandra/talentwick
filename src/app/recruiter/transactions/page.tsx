@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Receipt, CreditCard, CheckCircle2, XCircle, Clock, RefreshCcw } from "lucide-react";
+import { toast } from "sonner";
 
 const STATUS_CONFIG: Record<
   string,
@@ -62,7 +63,7 @@ export default function TransactionsPage() {
     if (!user) return;
     getRecruiterTransactions(user.uid)
       .then(setTransactions)
-      .catch(() => {})
+      .catch(() => toast.error("Failed to load transactions. Please refresh."))
       .finally(() => setLoading(false));
   }, [user]);
 

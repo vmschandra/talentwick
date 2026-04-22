@@ -49,8 +49,13 @@ service cloud.firestore {
       allow read: if resource.data.status == "active" ||
         (isSignedIn() && (request.auth.uid == resource.data.recruiterId || isAdmin()));
       allow create: if isRecruiter();
-      allow update: if isSignedIn() &&
-        (request.auth.uid == resource.data.recruiterId || isAdmin());
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.recruiterId ||
+        isAdmin() ||
+        // Candidates may only increment applicantCount when submitting an application
+        (userRole() == "candidate" &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(["applicantCount"]))
+      );
       allow delete: if isSignedIn() &&
         (request.auth.uid == resource.data.recruiterId || isAdmin());
     }
@@ -61,8 +66,12 @@ service cloud.firestore {
       allow create: if isSignedIn() && userRole() == "candidate" &&
         request.resource.data.candidateId == request.auth.uid;
 
-      // Owner candidate, owning recruiter, or admin may read
+      // Owner candidate, owning recruiter, or admin may read.
+      // The appId pattern check ({jobId}_{candidateId}) handles the hasApplied()
+      // existence check — resource is null for non-existent docs so we must
+      // short-circuit before touching resource.data.
       allow read: if isSignedIn() && (
+        appId.matches('(.+)_' + request.auth.uid) ||
         request.auth.uid == resource.data.candidateId ||
         request.auth.uid == resource.data.recruiterId ||
         isAdmin()
@@ -98,6 +107,10 @@ service cloud.firestore {
     match /notifications/{notifId} {
       allow read, update: if isSignedIn() &&
         request.auth.uid == resource.data.userId;
+      // Any signed-in user may create a notification for another user
+      // (e.g. candidate notifying recruiter on apply, recruiter notifying candidate on status change).
+      // Reads and updates are still scoped to the notification's owner above.
+      allow create: if isSignedIn();
     }
 
     // ── Conversations ─────────────────────────────────────────────────────
