@@ -163,8 +163,7 @@ function RegisterForm({ role }: { role: "candidate" | "recruiter" }) {
     },
   });
 
-  function redirectToOnboarding(uid: string) {
-    document.cookie = `session=${uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+  function redirectToOnboarding() {
     // Full page reload so AuthContext re-fetches the freshly-written user doc
     window.location.href = isRecruiter ? "/recruiter/company-profile" : "/candidate/profile";
   }
@@ -182,7 +181,7 @@ function RegisterForm({ role }: { role: "candidate" | "recruiter" }) {
         designation: "designation" in data ? data.designation : undefined,
       });
       toast.success("Account created! Let's set up your profile.");
-      redirectToOnboarding(user.uid);
+      redirectToOnboarding();
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Registration failed";
@@ -212,8 +211,6 @@ function RegisterForm({ role }: { role: "candidate" | "recruiter" }) {
         return;
       }
 
-      document.cookie = `session=${user.uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
-
       if (existingDoc) {
         toast.success("Welcome back! Redirecting to your dashboard.");
         if (isRecruiter) {
@@ -223,7 +220,7 @@ function RegisterForm({ role }: { role: "candidate" | "recruiter" }) {
         }
       } else {
         toast.success("Account created! Let's set up your profile.");
-        redirectToOnboarding(user.uid);
+        redirectToOnboarding();
       }
     } catch (error: unknown) {
       const message =

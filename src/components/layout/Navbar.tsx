@@ -84,7 +84,6 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     await logout();
-    document.cookie = "session=; path=/; max-age=0";
     window.location.href = "/";
   };
 

@@ -184,10 +184,6 @@ function LoginContent() {
       return;
     }
 
-    // Validation passed — commit the session cookie then hard-navigate so all
-    // server components and middleware see the fresh auth state.
-    document.cookie = `session=${uid}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
-
     // Onboarding takes priority — incomplete users must finish setup first.
     if (!userDocData.onboardingComplete) {
       window.location.href = userDocData.role === "recruiter"
