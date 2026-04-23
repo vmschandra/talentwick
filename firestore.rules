@@ -34,7 +34,13 @@ service cloud.firestore {
       allow read: if isSignedIn() && (
         request.auth.uid == userId || isRecruiter() || isAdmin()
       );
-      allow write: if isSignedIn() && request.auth.uid == userId;
+      // Owner or admin may write anything; recruiters may only increment profileViews
+      allow update: if isSignedIn() && (
+        request.auth.uid == userId ||
+        isAdmin() ||
+        (isRecruiter() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["profileViews"]))
+      );
+      allow create, delete: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }
 
     // ── Recruiter Profiles ────────────────────────────────────────────────
