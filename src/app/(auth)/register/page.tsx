@@ -37,7 +37,7 @@ const baseSchema = {
     .regex(/^[+\d][\d\s\-()]*$/, "Enter a valid phone number"),
   country: z.string().min(2, "Country is required"),
   city: z.string().min(2, "City is required"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 };
 
 const candidateSchema = z.object(baseSchema);
