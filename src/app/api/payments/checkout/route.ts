@@ -1,13 +1,21 @@
 import { NextResponse } from "next/server";
 import { getPaymentProvider } from "@/lib/payments/registry";
 import { getPlanById } from "@/config/pricing";
+import { verifyIdToken } from "@/lib/firebase/api-auth";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  const caller = await verifyIdToken(request);
+  if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
     const body = await request.json();
     const { planId, recruiterId, email } = body;
+
+    if (caller.uid !== recruiterId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const plan = getPlanById(planId);
     if (!plan) return NextResponse.json({ error: "Invalid plan" }, { status: 400 });

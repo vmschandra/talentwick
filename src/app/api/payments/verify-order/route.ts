@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase/admin";
+import { verifyIdToken } from "@/lib/firebase/api-auth";
 import { getPlanById } from "@/config/pricing";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
@@ -21,6 +22,9 @@ async function isAlreadyProcessed(orderId: string): Promise<boolean> {
 }
 
 export async function POST(request: Request) {
+  const caller = await verifyIdToken(request);
+  if (!caller) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
     const { orderId } = await request.json();
     if (!orderId) return NextResponse.json({ error: "orderId required" }, { status: 400 });
@@ -59,6 +63,10 @@ export async function POST(request: Request) {
 
     if (!recruiterId || !planId) {
       return NextResponse.json({ error: "Missing order tags" }, { status: 400 });
+    }
+
+    if (caller.uid !== recruiterId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const plan = getPlanById(planId);

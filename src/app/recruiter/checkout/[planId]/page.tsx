@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { getAuth } from "firebase/auth";
 import { useAuth } from "@/context/AuthContext";
 import { getPlanById, PricingPlan } from "@/config/pricing";
 import { formatCurrency } from "@/lib/utils";
@@ -21,10 +22,15 @@ function CheckoutForm({ plan, user }: { plan: PricingPlan; user: { uid: string; 
     setError(null);
 
     try {
+      const idToken = await getAuth().currentUser!.getIdToken();
+
       // 1. Create Cashfree order on the server
       const res = await fetch("/api/payments/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`,
+        },
         body: JSON.stringify({
           planId: plan.id,
           recruiterId: user.uid,

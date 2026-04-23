@@ -31,9 +31,13 @@ function SuccessContent() {
         // Verify the order with Cashfree and add credits if not already done
         const orderId = searchParams.get("order_id");
         if (orderId) {
+          const idToken = await user!.getIdToken();
           await fetch("/api/payments/verify-order", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${idToken}`,
+            },
             body: JSON.stringify({ orderId }),
           });
         }
