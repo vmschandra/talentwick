@@ -8,6 +8,7 @@ import { uploadCompanyLogo } from "@/lib/firebase/storage";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import { CompanySize } from "@/types";
+import { siteConfig } from "@/config/site";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -140,12 +141,12 @@ export default function CompanyProfilePage() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file");
+    if (!siteConfig.allowedImageTypes.includes(file.type)) {
+      toast.error("Only JPEG, PNG, and WebP images are accepted.");
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Image must be under 2MB");
+    if (file.size > siteConfig.maxImageSize) {
+      toast.error(`Image must be under ${siteConfig.maxImageSize / 1024 / 1024}MB.`);
       return;
     }
 
@@ -226,7 +227,7 @@ export default function CompanyProfilePage() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept={siteConfig.allowedImageTypes.join(",")}
                   className="hidden"
                   onChange={handleLogoUpload}
                 />
