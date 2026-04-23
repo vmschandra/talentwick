@@ -92,18 +92,18 @@ export default function SetupPage() {
           id: "payments",
           label: "Payments",
           description:
-            "Credit-based job posting payments. Supports Stripe, Razorpay, or PayPal.",
+            "Credit-based job posting payments. Supports Cashfree, Razorpay, or PayPal.",
           configured: status.payments.enabled,
           required: false,
           icon: <CreditCard className="h-5 w-5" />,
           provider: status.payments.provider,
           envVars:
-            status.payments.provider === "stripe"
+            status.payments.provider === "cashfree"
               ? [
-                  "NEXT_PUBLIC_PAYMENT_PROVIDER=stripe",
-                  "STRIPE_SECRET_KEY",
-                  "STRIPE_WEBHOOK_SECRET",
-                  "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+                  "NEXT_PUBLIC_PAYMENT_PROVIDER=cashfree",
+                  "CASHFREE_APP_ID",
+                  "CASHFREE_SECRET_KEY",
+                  "NEXT_PUBLIC_CASHFREE_ENV",
                 ]
               : status.payments.provider === "razorpay"
               ? [
@@ -113,12 +113,12 @@ export default function SetupPage() {
                   "NEXT_PUBLIC_RAZORPAY_KEY_ID",
                 ]
               : [
-                  "NEXT_PUBLIC_PAYMENT_PROVIDER=stripe",
-                  "STRIPE_SECRET_KEY",
-                  "STRIPE_WEBHOOK_SECRET",
-                  "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+                  "NEXT_PUBLIC_PAYMENT_PROVIDER=cashfree",
+                  "CASHFREE_APP_ID",
+                  "CASHFREE_SECRET_KEY",
+                  "NEXT_PUBLIC_CASHFREE_ENV",
                 ],
-          docsUrl: "https://stripe.com/docs",
+          docsUrl: "https://docs.cashfree.com/",
         },
         {
           id: "email",

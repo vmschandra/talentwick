@@ -9,11 +9,6 @@ export async function getPaymentProvider(): Promise<PaymentProvider> {
   if (_provider) return _provider;
 
   switch (providerName) {
-    case "stripe": {
-      const { stripeProvider } = await import("./providers/stripe");
-      _provider = stripeProvider;
-      break;
-    }
     case "cashfree": {
       const { cashfreeProvider } = await import("./providers/cashfree");
       _provider = cashfreeProvider;

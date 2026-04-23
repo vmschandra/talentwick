@@ -31,8 +31,8 @@ export function getConfigStatus(): ConfigStatus {
 
   const paymentProvider = process.env.NEXT_PUBLIC_PAYMENT_PROVIDER || null;
   let paymentVars: string[] = [];
-  if (paymentProvider === "stripe") {
-    paymentVars = ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"];
+  if (paymentProvider === "cashfree") {
+    paymentVars = ["CASHFREE_APP_ID", "CASHFREE_SECRET_KEY", "NEXT_PUBLIC_CASHFREE_ENV"];
   } else if (paymentProvider === "razorpay") {
     paymentVars = ["RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET", "NEXT_PUBLIC_RAZORPAY_KEY_ID"];
   } else if (paymentProvider === "paypal") {
