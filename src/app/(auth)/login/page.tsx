@@ -167,10 +167,16 @@ function LoginContent() {
   // Validates the user's role doc and either aborts (with logout) or commits
   // the session cookie and redirects. The cookie is intentionally set AFTER
   // validation so it is never persisted when login is rejected.
-  async function validateAndRedirect(uid: string, userDocData: { role: string; onboardingComplete?: boolean } | null) {
+  async function validateAndRedirect(uid: string, userDocData: { role: string; onboardingComplete?: boolean; isActive?: boolean } | null) {
     if (!userDocData) {
       await logout();
       setLoginError("No account found. Please register first.");
+      return;
+    }
+
+    if (userDocData.isActive === false) {
+      await logout();
+      setLoginError("Your account has been deactivated. Please contact support.");
       return;
     }
 

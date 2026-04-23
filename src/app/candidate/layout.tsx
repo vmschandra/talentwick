@@ -24,7 +24,8 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading && userDoc?.role !== "candidate") {
+    if (loading) return;
+    if (userDoc?.role !== "candidate" || userDoc?.isActive === false) {
       router.push(`/login?role=candidate&redirect=${encodeURIComponent(pathname)}`);
     }
   }, [loading, userDoc, router, pathname]);
@@ -37,7 +38,7 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
     );
   }
 
-  if (userDoc?.role !== "candidate") return null;
+  if (userDoc?.role !== "candidate" || userDoc?.isActive === false) return null;
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)]">

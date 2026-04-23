@@ -21,13 +21,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading && userDoc?.role !== "admin") {
+    if (loading) return;
+    if (userDoc?.role !== "admin" || userDoc?.isActive === false) {
       router.push(`/login?role=admin&redirect=${encodeURIComponent(pathname)}`);
     }
   }, [loading, userDoc, router, pathname]);
 
   if (loading) return <div className="flex h-96 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
-  if (userDoc?.role !== "admin") return null;
+  if (userDoc?.role !== "admin" || userDoc?.isActive === false) return null;
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)]">

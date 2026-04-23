@@ -40,7 +40,8 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
   const [recruiterProfile, setRecruiterProfile] = useState<RecruiterProfile | null>(null);
 
   useEffect(() => {
-    if (!loading && userDoc?.role !== "recruiter") {
+    if (loading) return;
+    if (userDoc?.role !== "recruiter" || userDoc?.isActive === false) {
       router.push(`/login?role=recruiter&redirect=${encodeURIComponent(pathname)}`);
     }
   }, [loading, userDoc, router, pathname]);
@@ -57,7 +58,7 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
     );
   }
 
-  if (userDoc?.role !== "recruiter") return null;
+  if (userDoc?.role !== "recruiter" || userDoc?.isActive === false) return null;
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)]">
