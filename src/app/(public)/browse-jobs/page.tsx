@@ -19,8 +19,12 @@ import {
 import { useJobSearch } from "@/hooks/useJobs";
 import { JobFilters, JobType, WorkMode, ExperienceLevel, Job } from "@/types";
 import { formatSalary, timeAgo } from "@/lib/utils";
+import { WORLD_LOCATIONS } from "@/lib/data/locations";
+import SearchableSelect from "@/components/shared/SearchableSelect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+const COUNTRIES = Object.keys(WORLD_LOCATIONS).sort();
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -189,7 +193,9 @@ function BrowseJobsContent() {
   const { jobs, loading, hasMore, search } = useJobSearch();
 
   const [keyword, setKeyword] = useState(searchParams.get("keyword") || "");
-  const [location, setLocation] = useState(searchParams.get("location") || "");
+  const [locationCountry, setLocationCountry] = useState(searchParams.get("country") || "");
+  const [locationCity, setLocationCity] = useState(searchParams.get("city") || "");
+  const location = locationCity ? `${locationCity}, ${locationCountry}` : locationCountry;
   const [jobType, setJobType] = useState<string>(searchParams.get("type") || "");
   const [workMode, setWorkMode] = useState<string>(searchParams.get("mode") || "");
   const [experienceLevel, setExperienceLevel] = useState<string>(
@@ -245,7 +251,8 @@ function BrowseJobsContent() {
 
   function clearFilters() {
     setKeyword("");
-    setLocation("");
+    setLocationCountry("");
+    setLocationCity("");
     setJobType("");
     setWorkMode("");
     setExperienceLevel("");
@@ -279,14 +286,21 @@ function BrowseJobsContent() {
               className="pl-9"
             />
           </div>
-          <div className="relative sm:w-56">
-            <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="City or region..."
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="pl-9"
+          <div className="sm:w-44">
+            <SearchableSelect
+              value={locationCountry}
+              onChange={(v) => { setLocationCountry(v); setLocationCity(""); }}
+              options={COUNTRIES}
+              placeholder="Country"
+            />
+          </div>
+          <div className="sm:w-44">
+            <SearchableSelect
+              value={locationCity}
+              onChange={setLocationCity}
+              options={locationCountry ? (WORLD_LOCATIONS[locationCountry] ?? []) : []}
+              placeholder={locationCountry ? "City" : "Select country first"}
+              disabled={!locationCountry}
             />
           </div>
           <Button onClick={handleSearch} className="gap-2 sm:w-auto">

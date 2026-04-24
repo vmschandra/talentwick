@@ -28,6 +28,11 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Building2, Upload, Loader2, Save } from "lucide-react";
+import { WORLD_LOCATIONS } from "@/lib/data/locations";
+import SearchableSelect from "@/components/shared/SearchableSelect";
+import { parseLocation } from "@/lib/utils";
+
+const COUNTRIES = Object.keys(WORLD_LOCATIONS).sort();
 
 const companySizes: CompanySize[] = ["1-10", "11-50", "51-200", "201-500", "500+"];
 
@@ -89,6 +94,8 @@ export default function CompanyProfilePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [locationCountry, setLocationCountry] = useState("");
+  const [locationCity, setLocationCity] = useState("");
   const [uploading, setUploading] = useState(false);
   const [logoURL, setLogoURL] = useState<string | undefined>();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -120,12 +127,16 @@ export default function CompanyProfilePage() {
             companySize: profile.companySize || "1-10",
             industry: profile.industry || "",
             companyDescription: profile.companyDescription || "",
-            location: profile.location || "",
-            designation: profile.designation || "",
+            location: profile.location || "",            designation: profile.designation || "",
             employeeId: profile.employeeId || "",
             workEmail: profile.workEmail || "",
           });
           setLogoURL(profile.companyLogo);
+          if (profile.location) {
+            const { country, city } = parseLocation(profile.location);
+            setLocationCountry(country || profile.location);
+            setLocationCity(city || "");
+          }
         }
       } catch {
         toast.error("Failed to load company profile");
@@ -359,8 +370,30 @@ export default function CompanyProfilePage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="location">Headquarters Location *</Label>
-                <Input id="location" placeholder="San Francisco, CA" {...register("location")} />
+                <Label>Headquarters Location *</Label>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <SearchableSelect
+                    value={locationCountry}
+                    onChange={(v) => {
+                      setLocationCountry(v);
+                      setLocationCity("");
+                      setValue("location", v, { shouldValidate: true, shouldDirty: true });
+                    }}
+                    options={COUNTRIES}
+                    placeholder="Search country…"
+                  />
+                  <SearchableSelect
+                    value={locationCity}
+                    onChange={(v) => {
+                      setLocationCity(v);
+                      setValue("location", v ? `${v}, ${locationCountry}` : locationCountry, { shouldValidate: true, shouldDirty: true });
+                    }}
+                    options={locationCountry ? (WORLD_LOCATIONS[locationCountry] ?? []) : []}
+                    placeholder={locationCountry ? "Search city…" : "Select country first"}
+                    disabled={!locationCountry}
+                  />
+                </div>
+                <input type="hidden" {...register("location")} />
                 {errors.location && (
                   <p className="text-sm text-destructive">{errors.location.message}</p>
                 )}

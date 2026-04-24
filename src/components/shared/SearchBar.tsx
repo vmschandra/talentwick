@@ -157,7 +157,8 @@ export default function SearchBar({
           value={city}
           onChange={handleCityChange}
           options={cityOptions}
-          placeholder="City"
+          placeholder={country ? "City" : "Select country first"}
+          disabled={!country}
         />
       </div>
 
