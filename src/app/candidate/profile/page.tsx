@@ -48,57 +48,6 @@ import {
 // ─── World location data ────────────────────────────────────
 const COUNTRIES = Object.keys(WORLD_LOCATIONS).sort();
 
-function ExperienceLocationPicker({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const initCountry = () => {
-    if (!value) return "";
-    if (value.includes(",")) return parseLocation(value).country;
-    return COUNTRIES.includes(value) ? value : "";
-  };
-  const initCity = () => {
-    if (!value) return "";
-    if (value.includes(",")) return parseLocation(value).city;
-    return COUNTRIES.includes(value) ? "" : value;
-  };
-
-  const [country, setCountry] = useState(initCountry);
-  const [city, setCity] = useState(initCity);
-
-  const handleCountryChange = (v: string) => {
-    setCountry(v);
-    setCity("");
-    onChange(v);
-  };
-
-  const handleCityChange = (v: string) => {
-    setCity(v);
-    onChange(v ? `${v}, ${country}` : country);
-  };
-
-  return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      <SearchableSelect
-        value={country}
-        onChange={handleCountryChange}
-        options={COUNTRIES}
-        placeholder="Search country…"
-      />
-      <SearchableSelect
-        value={city}
-        onChange={handleCityChange}
-        options={country ? (WORLD_LOCATIONS[country] ?? []) : []}
-        placeholder={country ? "Search city…" : "Select country first"}
-        disabled={!country}
-      />
-    </div>
-  );
-}
-
 // ─── Schema ────────────────────────────────────────────────
 const basicInfoSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(50, "First name must be under 50 characters"),
@@ -234,6 +183,8 @@ export default function CandidateProfilePage() {
   const [skills, setSkills] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState("");
   const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [expCountries, setExpCountries] = useState<string[]>([]);
+  const [expCities, setExpCities] = useState<string[]>([]);
   const [educations, setEducations] = useState<Education[]>([]);
   const [resumeURL, setResumeURL] = useState<string | undefined>();
   const [resumeFileName, setResumeFileName] = useState<string | undefined>();
@@ -320,7 +271,18 @@ export default function CandidateProfilePage() {
 
         if (existing) {
           setSkills(existing.skills || []);
-          setExperiences(existing.experience || []);
+          const loadedExps = existing.experience || [];
+          setExperiences(loadedExps);
+          setExpCountries(loadedExps.map((e) => {
+            if (!e.location) return "";
+            if (e.location.includes(",")) return parseLocation(e.location).country;
+            return COUNTRIES.includes(e.location) ? e.location : "";
+          }));
+          setExpCities(loadedExps.map((e) => {
+            if (!e.location) return "";
+            if (e.location.includes(",")) return parseLocation(e.location).city;
+            return COUNTRIES.includes(e.location) ? "" : e.location;
+          }));
           setEducations(existing.education || []);
           setResumeURL(existing.resumeURL);
           setResumeFileName(existing.resumeFileName);
@@ -396,11 +358,15 @@ export default function CandidateProfilePage() {
   // ─── Experience Handlers ─────────────────────────────────
   const addExperience = () => {
     setExperiences((prev) => [...prev, { ...blankExperience }]);
+    setExpCountries((prev) => [...prev, ""]);
+    setExpCities((prev) => [...prev, ""]);
     markLocalDirty();
   };
 
   const removeExperience = (index: number) => {
     setExperiences((prev) => prev.filter((_, i) => i !== index));
+    setExpCountries((prev) => prev.filter((_, i) => i !== index));
+    setExpCities((prev) => prev.filter((_, i) => i !== index));
     markLocalDirty();
   };
 
@@ -760,10 +726,28 @@ export default function CandidateProfilePage() {
 
                   <div className="space-y-2">
                     <Label>Location</Label>
-                    <ExperienceLocationPicker
-                      value={exp.location || ""}
-                      onChange={(v) => updateExperience(index, "location", v)}
-                    />
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <SearchableSelect
+                        value={expCountries[index] || ""}
+                        onChange={(v) => {
+                          setExpCountries((prev) => prev.map((c, i) => i === index ? v : c));
+                          setExpCities((prev) => prev.map((c, i) => i === index ? "" : c));
+                          updateExperience(index, "location", v);
+                        }}
+                        options={COUNTRIES}
+                        placeholder="Search country…"
+                      />
+                      <SearchableSelect
+                        value={expCities[index] || ""}
+                        onChange={(v) => {
+                          setExpCities((prev) => prev.map((c, i) => i === index ? v : c));
+                          updateExperience(index, "location", v ? `${v}, ${expCountries[index]}` : expCountries[index] || "");
+                        }}
+                        options={expCountries[index] ? (WORLD_LOCATIONS[expCountries[index]] ?? []) : []}
+                        placeholder={expCountries[index] ? "Search city…" : "Select country first"}
+                        disabled={!expCountries[index]}
+                      />
+                    </div>
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">
