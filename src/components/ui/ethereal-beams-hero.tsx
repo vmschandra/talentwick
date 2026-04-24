@@ -6,7 +6,8 @@ import { forwardRef, useImperativeHandle, useEffect, useRef, useMemo, type FC, t
 import * as THREE from "three"
 import { Canvas, useFrame } from "@react-three/fiber"
 import { PerspectiveCamera } from "@react-three/drei"
-import { degToRad } from "three/src/math/MathUtils.js"
+import { MathUtils } from "three"
+const { degToRad } = MathUtils
 import { ArrowRight, Star } from "lucide-react"
 
 // ============================================================================
