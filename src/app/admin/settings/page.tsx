@@ -45,12 +45,15 @@ export default function AdminSettingsPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetch("/api/health")
-      .then((r) => r.json())
-      .then(setHealth)
-      .catch(() => {})
-      .finally(() => setLoadingHealth(false));
-  }, []);
+    if (!user) return;
+    user.getIdToken().then((token) =>
+      fetch("/api/health", { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => r.json())
+        .then(setHealth)
+        .catch(() => {})
+        .finally(() => setLoadingHealth(false))
+    );
+  }, [user]);
 
   useEffect(() => {
     async function loadStats() {
