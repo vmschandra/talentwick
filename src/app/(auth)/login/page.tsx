@@ -167,7 +167,7 @@ function LoginContent() {
   // Validates the user's role doc and either aborts (with logout) or commits
   // the session cookie and redirects. The cookie is intentionally set AFTER
   // validation so it is never persisted when login is rejected.
-  async function validateAndRedirect(uid: string, userDocData: { role: string; onboardingComplete?: boolean; isActive?: boolean } | null) {
+  async function validateAndRedirect(userDocData: { role: string; onboardingComplete?: boolean; isActive?: boolean } | null) {
     if (!userDocData) {
       await logout();
       setLoginError("No account found. Please register first.");
@@ -181,7 +181,7 @@ function LoginContent() {
     }
 
     if (role !== "admin" && userDocData.role !== role) {
-      const existingRole = userDocData.role === "recruiter" ? "Recruiter" : "Candidate";
+      const existingRole = userDocData.role === "recruiter" ? "Recruiter" : userDocData.role === "admin" ? "Admin" : "Candidate";
       const attemptedRole = role === "recruiter" ? "Recruiter" : "Candidate";
       await logout();
       setLoginError(
@@ -191,7 +191,8 @@ function LoginContent() {
     }
 
     // Onboarding takes priority — incomplete users must finish setup first.
-    if (!userDocData.onboardingComplete) {
+    // Admins have no onboarding flow, so skip this check for them.
+    if (userDocData.role !== "admin" && !userDocData.onboardingComplete) {
       window.location.href = userDocData.role === "recruiter"
         ? "/recruiter/company-profile"
         : "/candidate/profile";
@@ -206,11 +207,17 @@ function LoginContent() {
         ? "/recruiter/dashboard"
         : "/candidate/dashboard";
 
-    // Honor the ?redirect= param only for safe internal paths.
+    // Honor the ?redirect= param only if it matches the user's own role prefix.
+    const rolePrefix =
+      userDocData.role === "admin"
+        ? "/admin"
+        : userDocData.role === "recruiter"
+        ? "/recruiter"
+        : "/candidate";
     const redirectParam = searchParams.get("redirect");
     const safePath =
       redirectParam &&
-      redirectParam.startsWith("/") &&
+      redirectParam.startsWith(rolePrefix) &&
       !redirectParam.startsWith("//")
         ? redirectParam
         : defaultPath;
@@ -224,7 +231,7 @@ function LoginContent() {
     try {
       const user = await loginWithEmail(data.email, data.password);
       const userDocData = await getUserDoc(user.uid);
-      await validateAndRedirect(user.uid, userDocData);
+      await validateAndRedirect(userDocData);
     } catch (error: unknown) {
       setLoginError(getFriendlyError(error));
     } finally {
@@ -238,7 +245,7 @@ function LoginContent() {
     try {
       const user = await loginWithGoogle();
       const userDocData = await getUserDoc(user.uid);
-      await validateAndRedirect(user.uid, userDocData);
+      await validateAndRedirect(userDocData);
     } catch (error: unknown) {
       setLoginError(getFriendlyError(error));
     } finally {
