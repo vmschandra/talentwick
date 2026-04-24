@@ -11,7 +11,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const token = authHeader.slice(7);
-    await getAdminAuth().verifyIdToken(token);
+    const decoded = await getAdminAuth().verifyIdToken(token);
+    const callerId = decoded.uid;
 
     const { conversationId, recipientId, recipientRole, senderName, previewText } =
       await request.json();
@@ -20,21 +21,34 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    // Verify the caller is actually a participant in this conversation.
+    const db = getAdminDb();
+    const convSnap = await db.collection("conversations").doc(conversationId).get();
+    if (!convSnap.exists) {
+      return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
+    }
+    const participants: string[] = convSnap.data()?.participantIds ?? [];
+    if (!participants.includes(callerId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    // Recipient must also be in the conversation.
+    if (!participants.includes(recipientId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const role = recipientRole === "recruiter" ? "recruiter" : "candidate";
     const link = `/${role}/messages?convId=${conversationId}`;
 
-    await getAdminDb()
-      .collection("notifications")
-      .add({
-        userId: recipientId,
-        type: "new_message",
-        title: `New message from ${senderName}`,
-        message: previewText ? previewText.slice(0, 80) : "",
-        link,
-        conversationId,
-        read: false,
-        createdAt: FieldValue.serverTimestamp(),
-      });
+    await db.collection("notifications").add({
+      userId: recipientId,
+      type: "new_message",
+      title: `New message from ${senderName}`,
+      message: previewText ? String(previewText).slice(0, 80) : "",
+      link,
+      conversationId,
+      read: false,
+      createdAt: FieldValue.serverTimestamp(),
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error: unknown) {

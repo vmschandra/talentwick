@@ -1,9 +1,24 @@
-import { NextResponse } from "next/server";
-import { getAdminDb } from "@/lib/firebase/admin";
+import { NextRequest, NextResponse } from "next/server";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+async function verifyAdmin(request: NextRequest): Promise<boolean> {
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return false;
+  try {
+    const decoded = await getAdminAuth().verifyIdToken(authHeader.slice(7));
+    const snap = await getAdminDb().collection("users").doc(decoded.uid).get();
+    return snap.exists && snap.data()?.role === "admin";
+  } catch {
+    return false;
+  }
+}
+
+export async function GET(request: NextRequest) {
+  if (!(await verifyAdmin(request))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   // Diagnose env vars (show presence + shape, never values)
   const hasBase64Key = !!process.env.FIREBASE_ADMIN_PRIVATE_KEY_BASE64;
   const hasRawKey = !!process.env.FIREBASE_ADMIN_PRIVATE_KEY;

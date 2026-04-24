@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getAllUsers } from "@/lib/firebase/firestore";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
+import { useAuth } from "@/context/AuthContext";
 import { UserDoc } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,7 @@ import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 
 export default function AdminUsersPage() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,6 +31,10 @@ export default function AdminUsersPage() {
   }, []);
 
   const toggleActive = async (uid: string, currentActive: boolean): Promise<void> => {
+    if (uid === currentUser?.uid) {
+      toast.error("You cannot deactivate your own account.");
+      return;
+    }
     try {
       await updateDoc(doc(db, "users", uid), { isActive: !currentActive });
       setUsers((prev) => prev.map((u) => (u.uid === uid ? { ...u, isActive: !currentActive } : u)));

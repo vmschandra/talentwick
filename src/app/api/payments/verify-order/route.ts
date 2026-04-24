@@ -29,11 +29,8 @@ export async function POST(request: Request) {
     const { orderId } = await request.json();
     if (!orderId) return NextResponse.json({ error: "orderId required" }, { status: 400 });
 
-    console.log("[Verify Order] Checking orderId:", orderId);
-
     // Idempotency — don't double-credit
     if (await isAlreadyProcessed(orderId)) {
-      console.log("[Verify Order] Already processed:", orderId);
       return NextResponse.json({ success: true, alreadyProcessed: true });
     }
 
@@ -47,8 +44,6 @@ export async function POST(request: Request) {
     });
 
     const order = await res.json();
-    console.log("[Verify Order] Cashfree response status:", res.status, "order_status:", order.order_status);
-
     if (!res.ok) throw new Error(order.message || "Failed to fetch order from Cashfree");
     if (order.order_status !== "PAID") {
       return NextResponse.json({ success: false, status: order.order_status });
@@ -58,8 +53,6 @@ export async function POST(request: Request) {
     const tags: Record<string, string> = order.order_tags || {};
     const recruiterId = tags.recruiter_id;
     const planId = tags.plan_id;
-
-    console.log("[Verify Order] Tags — recruiterId:", recruiterId, "planId:", planId);
 
     if (!recruiterId || !planId) {
       return NextResponse.json({ error: "Missing order tags" }, { status: 400 });
@@ -87,8 +80,6 @@ export async function POST(request: Request) {
         creditsExpiresAt: expiresAt,
       });
     });
-
-    console.log("[Verify Order] Credits added for recruiter:", recruiterId, "plan:", planId, "credits:", plan.credits);
 
     await db.collection("transactions").add({
       recruiterId,

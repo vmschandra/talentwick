@@ -92,7 +92,13 @@ export const cashfreeProvider: PaymentProvider = {
       .update(`${timestamp}${rawBody}`)
       .digest("base64");
 
-    if (expected !== signature) {
+    // Use constant-time comparison to prevent timing-based signature forgery.
+    const expectedBuf = Buffer.from(expected);
+    const signatureBuf = Buffer.from(signature);
+    const valid =
+      expectedBuf.length === signatureBuf.length &&
+      crypto.timingSafeEqual(expectedBuf, signatureBuf);
+    if (!valid) {
       throw new Error("Invalid Cashfree webhook signature.");
     }
 

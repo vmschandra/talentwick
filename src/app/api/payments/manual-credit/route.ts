@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
-import { addCreditsToRecruiter } from "@/lib/payments/credit-service";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
 
@@ -33,18 +33,48 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
-    await addCreditsToRecruiter(recruiterId, credits, {
-      plan: plan || "manual",
-      amount: amount || 0,
-      currency: "USD",
+    // Use Admin SDK so server-side writes bypass client Firestore security rules.
+    const db = getAdminDb();
+    const recruiterRef = db.collection("recruiterProfiles").doc(recruiterId);
+    const expiresAt = Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
+
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(recruiterRef);
+      if (!snap.exists) throw new Error("Recruiter profile not found");
+      tx.update(recruiterRef, {
+        jobPostCredits: FieldValue.increment(credits),
+        totalSpent: FieldValue.increment(amount || 0),
+        creditsExpiresAt: expiresAt,
+      });
+    });
+
+    await db.collection("transactions").add({
+      recruiterId,
       gateway: "manual",
       gatewaySessionId: `manual-${Date.now()}`,
       gatewayTransactionId: `admin-${admin.uid}-${Date.now()}`,
+      plan: plan || "manual",
+      amount: amount || 0,
+      currency: "INR",
+      credits,
+      status: "completed",
+      createdAt: FieldValue.serverTimestamp(),
+    });
+
+    await db.collection("notifications").add({
+      userId: recruiterId,
+      type: "credits_added",
+      title: "Credits Added",
+      message: `${credits} job posting credit${credits > 1 ? "s" : ""} added to your account.`,
+      link: "/recruiter/pricing",
+      read: false,
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     return NextResponse.json({ success: true, credits });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to add credits";
+    console.error("[manual-credit]", message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

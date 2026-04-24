@@ -6,7 +6,6 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
-    // Verify recruiter auth token
     const authHeader = request.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -15,12 +14,17 @@ export async function POST(request: Request) {
     const decoded = await getAdminAuth().verifyIdToken(token);
     const recruiterId = decoded.uid;
 
+    // Verify the caller is actually a recruiter.
+    const db = getAdminDb();
+    const userSnap = await db.collection("users").doc(recruiterId).get();
+    if (!userSnap.exists || userSnap.data()?.role !== "recruiter") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const { candidateId, candidateName, recruiterName, companyName } = await request.json();
     if (!candidateId) {
       return NextResponse.json({ error: "candidateId required" }, { status: 400 });
     }
-
-    const db = getAdminDb();
 
     // Check if conversation already exists
     const existing = await db

@@ -2,19 +2,23 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
-    // Resumes — any signed-in user may read; only the owner may write
+    // Resumes — owner can read/write; recruiters and admins can read (for reviewing applicants)
     match /resumes/{uid}/{filename} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null && (
+        request.auth.uid == uid ||
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == "recruiter" ||
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == "admin"
+      );
       allow write: if request.auth != null && request.auth.uid == uid;
     }
 
-    // Avatars — any signed-in user may read; only the owner may write
+    // Avatars — owner can read/write; any signed-in user can read (used in public-facing profiles)
     match /avatars/{uid}/{filename} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == uid;
     }
 
-    // Company logos — any signed-in user may read; only the owner may write
+    // Company logos — any signed-in user can read (shown on job listings); only owner can write
     match /logos/{uid}/{filename} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == uid;
