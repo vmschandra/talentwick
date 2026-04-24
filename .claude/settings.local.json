@@ -50,7 +50,18 @@
       "Bash(python3 -c \" import sys, json lines = sys.stdin.readlines\\(\\) for line in lines[-50:]: try: obj = json.loads\\(line\\) role = obj.get\\('role', ''\\) content = obj.get\\('content', ''\\) if isinstance\\(content, list\\): for c in content: if isinstance\\(c, dict\\) and c.get\\('type'\\) == 'text': print\\(f'[{role}]: {c[\\\\\"text\\\\\"][:500]}'\\) elif isinstance\\(content, str\\): print\\(f'[{role}]: {content[:500]}'\\) except: pass \")",
       "Bash(python3)",
       "Bash(git -C \"/Users/vamshi/Desktop/Desk/Projects/JOB PORTAL\" diff --stat)",
-      "Bash(git -C \"/Users/vamshi/Desktop/Desk/Projects/JOB PORTAL\" status --short)"
+      "Bash(git -C \"/Users/vamshi/Desktop/Desk/Projects/JOB PORTAL\" status --short)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(sudo npm *)",
+      "Bash(npx uipro-cli *)",
+      "Bash(~/.npm-global/bin/uipro init *)",
+      "Bash(~/.npm-global/bin/uipro --help)",
+      "Bash(mkdir -p ~/.claude)",
+      "Read(//Users/vamshi/.claude/**)",
+      "Bash(mkdir -p ~/.claude/skills)",
+      "Bash(mv ~/.claude/.claude/skills/ui-ux-pro-max ~/.claude/skills/ui-ux-pro-max)",
+      "Bash(grep -E \"package\\\\.json$\")",
+      "Bash(rm -rf \"/Users/vamshi/Desktop/Desk/Projects/JOB PORTAL/src/app/api/debug-admin-doc\")"
     ],
     "additionalDirectories": [
       "/Users/vamshi/Desktop/Desk/Projects/JOB PORTAL/src/app/recruiter/checkout"
