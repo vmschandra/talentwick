@@ -176,6 +176,21 @@ export function newMessageEmail(
   };
 }
 
+// ── Password reset ────────────────────────────────────────────────────────────
+
+export function passwordResetEmail(resetLink: string) {
+  const body = `
+    ${h1("Reset Your Password")}
+    ${p("We received a request to reset the password for your TalentWick account. Click the button below to choose a new password.")}
+    ${btn("Reset Password", resetLink)}
+    ${p(`<span style="font-size:13px;color:#6b7280;">This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email.</span>`)}
+  `;
+  return {
+    subject: "Reset your TalentWick password",
+    html: wrapper(body),
+  };
+}
+
 // ── Credits added (to recruiter) ──────────────────────────────────────────────
 
 export function creditsAddedEmail(

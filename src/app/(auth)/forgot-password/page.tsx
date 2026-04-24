@@ -9,7 +9,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Loader2, Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
 
-import { resetPassword } from "@/lib/firebase/auth";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,16 +62,22 @@ export default function ForgotPasswordPage() {
   async function onSubmit(data: ForgotFormValues) {
     setIsLoading(true);
     try {
-      await resetPassword(data.email);
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: data.email }),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error || "Failed to send reset email");
+      }
       setSentEmail(data.email);
       setIsEmailSent(true);
       toast.success("Password reset email sent!");
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to send reset email";
-      if (message.includes("user-not-found")) {
-        toast.error("No account found with this email address.");
-      } else if (message.includes("too-many-requests")) {
+      if (message.includes("too-many-requests")) {
         toast.error("Too many requests. Please wait a moment and try again.");
       } else {
         toast.error(message);
