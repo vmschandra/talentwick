@@ -3,6 +3,8 @@ import { getPaymentProvider } from "@/lib/payments/registry";
 import { getPlanById } from "@/config/pricing";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { sendEmail } from "@/lib/email";
+import { creditsAddedEmail } from "@/lib/email/templates";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +66,18 @@ async function addCreditsToRecruiter(
     read: false,
     createdAt: FieldValue.serverTimestamp(),
   });
+
+  // Send confirmation email (fire-and-forget)
+  const userSnap = await db.collection("users").doc(recruiterId).get();
+  if (userSnap.exists) {
+    const plan = getPlanById(data.plan);
+    const { subject, html } = creditsAddedEmail(
+      userSnap.data()!.displayName,
+      credits,
+      plan?.name ?? "Credit"
+    );
+    await sendEmail(userSnap.data()!.email, subject, html);
+  }
 }
 
 export async function POST(request: Request) {

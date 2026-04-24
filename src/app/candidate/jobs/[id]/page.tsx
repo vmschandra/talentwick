@@ -14,6 +14,7 @@ import {
 import { Job, CandidateProfile } from "@/types";
 import { formatDate, formatCurrency, timeAgo } from "@/lib/utils";
 import { toast } from "sonner";
+import { triggerEmail } from "@/lib/email/send-client";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -145,6 +146,16 @@ export default function JobDetailPage() {
       setApplied(true);
       setShowApplyDialog(false);
       toast.success("Application submitted successfully!");
+      // Fire-and-forget notification email to recruiter
+      user.getIdToken().then((token) =>
+        triggerEmail(token, {
+          type: "application_received",
+          jobId: job!.id,
+          jobTitle: job!.title,
+          candidateName: userDoc.displayName || "Candidate",
+          recruiterId: job!.recruiterId,
+        })
+      );
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to submit application.";

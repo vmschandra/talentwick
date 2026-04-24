@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { sendEmail } from "@/lib/email";
+import { creditsAddedEmail } from "@/lib/email/templates";
+import { pricingPlans } from "@/config/pricing";
 
 export const dynamic = "force-dynamic";
 
@@ -70,6 +73,18 @@ export async function POST(request: Request) {
       read: false,
       createdAt: FieldValue.serverTimestamp(),
     });
+
+    // Send confirmation email (fire-and-forget)
+    const userSnap = await db.collection("users").doc(recruiterId).get();
+    if (userSnap.exists) {
+      const planObj = pricingPlans.find((p) => p.id === plan) ?? null;
+      const { subject, html } = creditsAddedEmail(
+        userSnap.data()!.displayName,
+        credits,
+        planObj?.name ?? "Manual"
+      );
+      await sendEmail(userSnap.data()!.email, subject, html);
+    }
 
     return NextResponse.json({ success: true, credits });
   } catch (error: unknown) {

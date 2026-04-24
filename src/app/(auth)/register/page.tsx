@@ -14,6 +14,7 @@ import {
   loginWithGoogle,
   getUserDoc,
 } from "@/lib/firebase/auth";
+import { triggerEmail } from "@/lib/email/send-client";
 import { UserRole } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -181,6 +182,10 @@ function RegisterForm({ role }: { role: "candidate" | "recruiter" }) {
         designation: "designation" in data ? data.designation : undefined,
       });
       toast.success("Account created! Let's set up your profile.");
+      // Fire-and-forget welcome email
+      user.getIdToken().then((token) =>
+        triggerEmail(token, { type: "welcome", uid: user.uid })
+      );
       redirectToOnboarding();
     } catch (error: unknown) {
       const message =

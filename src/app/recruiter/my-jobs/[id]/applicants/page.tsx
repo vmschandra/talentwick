@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { getJob, getJobApplications, updateApplicationStatus } from "@/lib/firebase/firestore";
+import { triggerEmail } from "@/lib/email/send-client";
 import { Job, Application, ApplicationStatus } from "@/types";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -87,6 +88,16 @@ export default function ApplicantsPage() {
         prev.map((a) => (a.id === applicationId ? { ...a, status: newStatus } : a))
       );
       toast.success(`Status updated to "${newStatus}"`);
+      // Fire-and-forget status email to candidate
+      user!.getIdToken().then((token) =>
+        triggerEmail(token, {
+          type: "application_status",
+          candidateId: app.candidateId,
+          jobTitle: job!.title,
+          companyName: job!.companyName,
+          status: newStatus,
+        })
+      );
     } catch {
       toast.error("Failed to update applicant status");
     }
