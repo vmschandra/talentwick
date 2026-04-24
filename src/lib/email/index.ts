@@ -8,7 +8,7 @@ function getClient(): Resend | null {
   return _client;
 }
 
-const FROM = "TalentWick <noreply@talentwick.com>";
+const FROM = process.env.RESEND_FROM_EMAIL ?? "TalentWick <onboarding@resend.dev>";
 
 export async function sendEmail(to: string, subject: string, html: string): Promise<void> {
   const client = getClient();
