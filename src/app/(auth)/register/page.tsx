@@ -8,6 +8,10 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Loader2, Globe, UserCircle, Building, ArrowRight } from "lucide-react";
+import { WORLD_LOCATIONS } from "@/lib/data/locations";
+import SearchableSelect from "@/components/shared/SearchableSelect";
+
+const COUNTRIES = Object.keys(WORLD_LOCATIONS).sort();
 
 import {
   registerWithEmail,
@@ -140,6 +144,8 @@ function RolePicker() {
 function RegisterForm({ role }: { role: "candidate" | "recruiter" }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
 
   const isRecruiter = role === "recruiter";
   const schema = isRecruiter ? recruiterSchema : candidateSchema;
@@ -147,6 +153,7 @@ function RegisterForm({ role }: { role: "candidate" | "recruiter" }) {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<RecruiterFormValues>({
     // @ts-expect-error -- conditional schema (candidateSchema | recruiterSchema) causes resolver
@@ -346,25 +353,37 @@ function RegisterForm({ role }: { role: "candidate" | "recruiter" }) {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="country">Country *</Label>
-                <Input
-                  id="country"
-                  placeholder="United States"
+                <Label>Country *</Label>
+                <SearchableSelect
+                  value={selectedCountry}
+                  onChange={(v) => {
+                    setSelectedCountry(v);
+                    setSelectedCity("");
+                    setValue("country", v, { shouldValidate: true });
+                    setValue("city", "", { shouldValidate: false });
+                  }}
+                  options={COUNTRIES}
+                  placeholder="Search country..."
                   disabled={isDisabled}
-                  {...register("country")}
                 />
+                <input type="hidden" {...register("country")} />
                 {errors.country && (
                   <p className="text-sm text-destructive">{errors.country.message}</p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="city">City *</Label>
-                <Input
-                  id="city"
-                  placeholder="San Francisco"
-                  disabled={isDisabled}
-                  {...register("city")}
+                <Label>City *</Label>
+                <SearchableSelect
+                  value={selectedCity}
+                  onChange={(v) => {
+                    setSelectedCity(v);
+                    setValue("city", v, { shouldValidate: true });
+                  }}
+                  options={selectedCountry ? (WORLD_LOCATIONS[selectedCountry] ?? []) : []}
+                  placeholder={selectedCountry ? "Search city..." : "Select country first"}
+                  disabled={isDisabled || !selectedCountry}
                 />
+                <input type="hidden" {...register("city")} />
                 {errors.city && (
                   <p className="text-sm text-destructive">{errors.city.message}</p>
                 )}
