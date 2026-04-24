@@ -146,16 +146,23 @@ export default function JobDetailPage() {
       setApplied(true);
       setShowApplyDialog(false);
       toast.success("Application submitted successfully!");
-      // Fire-and-forget notification email to recruiter
-      user.getIdToken().then((token) =>
+      user.getIdToken().then((token) => {
+        // Notify recruiter
         triggerEmail(token, {
           type: "application_received",
           jobId: job!.id,
           jobTitle: job!.title,
           candidateName: userDoc.displayName || "Candidate",
           recruiterId: job!.recruiterId,
-        })
-      );
+        });
+        // Confirm to candidate
+        triggerEmail(token, {
+          type: "application_submitted",
+          candidateId: user.uid,
+          jobTitle: job!.title,
+          companyName: job!.companyName,
+        });
+      });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to submit application.";

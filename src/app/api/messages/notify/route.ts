@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
+import { sendEmail } from "@/lib/email";
+import { newMessageEmail } from "@/lib/email/templates";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +51,20 @@ export async function POST(request: Request) {
       read: false,
       createdAt: FieldValue.serverTimestamp(),
     });
+
+    // Send email notification to recipient
+    const recipientSnap = await db.collection("users").doc(recipientId).get();
+    if (recipientSnap.exists) {
+      const recipient = recipientSnap.data()!;
+      const { subject, html } = newMessageEmail(
+        recipient.displayName,
+        senderName,
+        previewText ? String(previewText).slice(0, 120) : "",
+        conversationId,
+        role as "candidate" | "recruiter"
+      );
+      sendEmail(recipient.email, subject, html).catch(() => {});
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error: unknown) {

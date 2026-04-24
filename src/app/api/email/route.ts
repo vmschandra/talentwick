@@ -5,6 +5,9 @@ import {
   welcomeEmail,
   applicationReceivedEmail,
   applicationStatusEmail,
+  applicationSubmittedEmail,
+  jobPostedEmail,
+  newMessageEmail,
   creditsAddedEmail,
 } from "@/lib/email/templates";
 
@@ -61,6 +64,40 @@ export async function POST(request: Request) {
         status
       );
       await sendEmail(candidate.email, subject, html);
+
+    } else if (type === "application_submitted") {
+      const { candidateId, jobTitle, companyName } = body;
+      const snap = await db.collection("users").doc(candidateId).get();
+      if (!snap.exists) return NextResponse.json({ ok: true });
+      const candidate = snap.data()!;
+      const { subject, html } = applicationSubmittedEmail(
+        candidate.displayName,
+        jobTitle,
+        companyName
+      );
+      await sendEmail(candidate.email, subject, html);
+
+    } else if (type === "job_posted") {
+      const { recruiterId, jobTitle, jobId } = body;
+      const snap = await db.collection("users").doc(recruiterId).get();
+      if (!snap.exists) return NextResponse.json({ ok: true });
+      const recruiter = snap.data()!;
+      const { subject, html } = jobPostedEmail(recruiter.displayName, jobTitle, jobId);
+      await sendEmail(recruiter.email, subject, html);
+
+    } else if (type === "new_message") {
+      const { recipientId, senderName, previewText, conversationId, recipientRole } = body;
+      const snap = await db.collection("users").doc(recipientId).get();
+      if (!snap.exists) return NextResponse.json({ ok: true });
+      const recipient = snap.data()!;
+      const { subject, html } = newMessageEmail(
+        recipient.displayName,
+        senderName,
+        previewText || "",
+        conversationId,
+        recipientRole || "candidate"
+      );
+      await sendEmail(recipient.email, subject, html);
 
     } else if (type === "credits_added") {
       const { recruiterId, credits, planName } = body;

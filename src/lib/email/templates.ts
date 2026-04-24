@@ -116,6 +116,66 @@ export function applicationStatusEmail(
   return { subject: `${label} — ${jobTitle}`, html: wrapper(body) };
 }
 
+// ── Application submitted (to candidate) ─────────────────────────────────────
+
+export function applicationSubmittedEmail(
+  candidateName: string,
+  jobTitle: string,
+  companyName: string
+) {
+  const body = `
+    ${h1("Application Submitted!")}
+    ${p(`Hi <strong>${candidateName}</strong>, your application for <strong>${jobTitle}</strong> at <strong>${companyName}</strong> has been successfully submitted.`)}
+    ${p("We'll notify you as soon as the recruiter reviews your application.")}
+    ${btn("View My Applications", `${BASE_URL}/candidate/applications`)}
+  `;
+  return {
+    subject: `Application submitted — ${jobTitle} at ${companyName}`,
+    html: wrapper(body),
+  };
+}
+
+// ── Job posted (to recruiter) ─────────────────────────────────────────────────
+
+export function jobPostedEmail(
+  recruiterName: string,
+  jobTitle: string,
+  jobId: string
+) {
+  const body = `
+    ${h1("Your Job is Live!")}
+    ${p(`Hi <strong>${recruiterName}</strong>, your job posting for <strong>${jobTitle}</strong> is now live and visible to candidates.`)}
+    ${p("You can manage your posting, view applicants, and update the status from your dashboard.")}
+    ${btn("View Job Posting", `${BASE_URL}/recruiter/my-jobs/${jobId}`)}
+  `;
+  return {
+    subject: `Your job "${jobTitle}" is now live on TalentWick`,
+    html: wrapper(body),
+  };
+}
+
+// ── New message (to recipient) ────────────────────────────────────────────────
+
+export function newMessageEmail(
+  recipientName: string,
+  senderName: string,
+  previewText: string,
+  conversationId: string,
+  recipientRole: "candidate" | "recruiter"
+) {
+  const link = `${BASE_URL}/${recipientRole}/messages?convId=${conversationId}`;
+  const body = `
+    ${h1(`New message from ${senderName}`)}
+    ${p(`Hi <strong>${recipientName}</strong>, you have a new message from <strong>${senderName}</strong>.`)}
+    ${previewText ? `<blockquote style="margin:16px 0;padding:12px 16px;background:#f9fafb;border-left:3px solid #1e3a5f;color:#374151;font-size:14px;border-radius:0 4px 4px 0;">${previewText}</blockquote>` : ""}
+    ${btn("Reply Now", link)}
+  `;
+  return {
+    subject: `New message from ${senderName} on TalentWick`,
+    html: wrapper(body),
+  };
+}
+
 // ── Credits added (to recruiter) ──────────────────────────────────────────────
 
 export function creditsAddedEmail(

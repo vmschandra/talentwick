@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { getRecruiterProfile, postJobWithCredit } from "@/lib/firebase/firestore";
+import { triggerEmail } from "@/lib/email/send-client";
 import { RecruiterProfile, JobType, WorkMode, ExperienceLevel } from "@/types";
 import { WORLD_LOCATIONS } from "@/lib/data/locations";
 import SearchableSelect from "@/components/shared/SearchableSelect";
@@ -242,6 +243,15 @@ export default function PostJobPage() {
       });
 
       toast.success("Job posted successfully!");
+      // Fire-and-forget confirmation email to recruiter
+      user.getIdToken().then((token) =>
+        triggerEmail(token, {
+          type: "job_posted",
+          recruiterId: user.uid,
+          jobTitle: data.title,
+          jobId,
+        })
+      );
       router.push(`/recruiter/my-jobs/${jobId}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to post job";
