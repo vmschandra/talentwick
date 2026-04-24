@@ -48,6 +48,57 @@ import {
 // ─── World location data ────────────────────────────────────
 const COUNTRIES = Object.keys(WORLD_LOCATIONS).sort();
 
+function ExperienceLocationPicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const initCountry = () => {
+    if (!value) return "";
+    if (value.includes(",")) return parseLocation(value).country;
+    return COUNTRIES.includes(value) ? value : "";
+  };
+  const initCity = () => {
+    if (!value) return "";
+    if (value.includes(",")) return parseLocation(value).city;
+    return COUNTRIES.includes(value) ? "" : value;
+  };
+
+  const [country, setCountry] = useState(initCountry);
+  const [city, setCity] = useState(initCity);
+
+  const handleCountryChange = (v: string) => {
+    setCountry(v);
+    setCity("");
+    onChange(v);
+  };
+
+  const handleCityChange = (v: string) => {
+    setCity(v);
+    onChange(v ? `${v}, ${country}` : country);
+  };
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <SearchableSelect
+        value={country}
+        onChange={handleCountryChange}
+        options={COUNTRIES}
+        placeholder="Search country…"
+      />
+      <SearchableSelect
+        value={city}
+        onChange={handleCityChange}
+        options={country ? (WORLD_LOCATIONS[country] ?? []) : []}
+        placeholder={country ? "Search city…" : "Select country first"}
+        disabled={!country}
+      />
+    </div>
+  );
+}
+
 // ─── Schema ────────────────────────────────────────────────
 const basicInfoSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(50, "First name must be under 50 characters"),
@@ -709,32 +760,10 @@ export default function CandidateProfilePage() {
 
                   <div className="space-y-2">
                     <Label>Location</Label>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {(() => {
-                        const { country: expCountry, city: expCity } = parseLocation(exp.location || "");
-                        return (
-                          <>
-                            <SearchableSelect
-                              value={expCountry}
-                              onChange={(v) => {
-                                updateExperience(index, "location", v);
-                              }}
-                              options={COUNTRIES}
-                              placeholder="Search country…"
-                            />
-                            <SearchableSelect
-                              value={expCity}
-                              onChange={(v) => {
-                                updateExperience(index, "location", v ? `${v}, ${expCountry}` : expCountry);
-                              }}
-                              options={expCountry ? (WORLD_LOCATIONS[expCountry] ?? []) : []}
-                              placeholder={expCountry ? "Search city…" : "Select country first"}
-                              disabled={!expCountry}
-                            />
-                          </>
-                        );
-                      })()}
-                    </div>
+                    <ExperienceLocationPicker
+                      value={exp.location || ""}
+                      onChange={(v) => updateExperience(index, "location", v)}
+                    />
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">
