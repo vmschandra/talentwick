@@ -709,11 +709,32 @@ export default function CandidateProfilePage() {
 
                   <div className="space-y-2">
                     <Label>Location</Label>
-                    <Input
-                      placeholder="e.g. Mountain View, CA"
-                      value={exp.location}
-                      onChange={(e) => updateExperience(index, "location", e.target.value)}
-                    />
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {(() => {
+                        const { country: expCountry, city: expCity } = parseLocation(exp.location || "");
+                        return (
+                          <>
+                            <SearchableSelect
+                              value={expCountry}
+                              onChange={(v) => {
+                                updateExperience(index, "location", v);
+                              }}
+                              options={COUNTRIES}
+                              placeholder="Search country…"
+                            />
+                            <SearchableSelect
+                              value={expCity}
+                              onChange={(v) => {
+                                updateExperience(index, "location", v ? `${v}, ${expCountry}` : expCountry);
+                              }}
+                              options={expCountry ? (WORLD_LOCATIONS[expCountry] ?? []) : []}
+                              placeholder={expCountry ? "Search city…" : "Select country first"}
+                              disabled={!expCountry}
+                            />
+                          </>
+                        );
+                      })()}
+                    </div>
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">
