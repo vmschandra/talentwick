@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ShieldCheck } from "lucide-react";
 import { siteConfig } from "@/config/site";
 
 export default function Footer() {
@@ -14,13 +13,6 @@ export default function Footer() {
           <Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground">Contact Us</Link>
         </div>
         <div className="mt-10 border-t pt-6 flex flex-col items-center gap-3">
-          <Link
-            href="/login?role=admin"
-            className="inline-flex items-center gap-1.5 rounded-md border border-muted-foreground/20 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-          >
-            <ShieldCheck className="h-3.5 w-3.5" />
-            Admin Login
-          </Link>
           <p className="text-xs text-muted-foreground">
             &copy; {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
           </p>
