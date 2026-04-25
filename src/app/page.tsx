@@ -156,8 +156,7 @@ export default function HomePage() {
       {/* Features */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold">Everything You Need</h2>
-          <p className="mt-2 text-muted-foreground">Powerful tools for both job seekers and recruiters</p>
+          <h2 className="text-3xl font-bold">For Recruiters</h2>
         </div>
         <div className="mt-12 grid gap-8 md:grid-cols-3">
           {features.map((f) => (
