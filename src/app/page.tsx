@@ -47,18 +47,9 @@ export default function HomePage() {
     <div>
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5">
-        <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
-              Find Your Next <span className="text-primary">Opportunity</span>
-            </h1>
-            <p className="mt-6 text-lg text-muted-foreground">
-              {siteConfig.description}
-            </p>
-          </div>
-
-          {isLoggedIn ? (
-            <div className="mx-auto mt-12 max-w-md text-center">
+        {isLoggedIn ? (
+          <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
+            <div className="mx-auto max-w-md text-center">
               <Card>
                 <CardContent className="flex flex-col items-center gap-4 p-8">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -68,9 +59,7 @@ export default function HomePage() {
                     <h3 className="text-xl font-semibold">
                       Welcome back{userDoc?.displayName ? `, ${userDoc.displayName.split(" ")[0]}` : ""}!
                     </h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Pick up where you left off
-                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">Pick up where you left off</p>
                   </div>
                   <Link href={dashboardPath} className="w-full">
                     <Button className="w-full gap-2">
@@ -85,71 +74,91 @@ export default function HomePage() {
                 </CardContent>
               </Card>
             </div>
-          ) : (
-            <>
-              {/* Role-based login cards */}
-              <div className="mx-auto mt-12 grid max-w-2xl gap-6 sm:grid-cols-2">
-                <Card className="group h-full transition-all hover:shadow-lg hover:border-primary/50">
-                  <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      <UserCircle className="h-8 w-8" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold">I&apos;m a Job Seeker</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Search and apply for jobs from top companies
-                      </p>
-                    </div>
-                    <Link href="/login?role=candidate" className="w-full">
-                      <Button className="mt-2 w-full gap-2 bg-primary/10 text-primary hover:bg-primary/20">
-                        Log in as Candidate <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                    <p className="text-xs text-muted-foreground">
-                      New here?{" "}
-                      <Link href="/register?role=candidate" className="text-primary underline">
-                        Create an account
-                      </Link>
-                    </p>
-                  </CardContent>
-                </Card>
+          </div>
+        ) : (
+          <div className="grid min-h-[85vh] lg:grid-cols-2">
 
-                <Card className="group h-full transition-all hover:shadow-lg hover:border-primary/50">
-                  <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      <Building className="h-8 w-8" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold">I&apos;m a Recruiter</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Post jobs and find the perfect candidates
-                      </p>
-                    </div>
-                    <Link href="/login?role=recruiter" className="w-full">
-                      <Button className="mt-2 w-full gap-2">
-                        Log in as Recruiter <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                    <p className="text-xs text-muted-foreground">
-                      New here?{" "}
-                      <Link href="/register?role=recruiter" className="text-primary underline">
-                        Create an account
-                      </Link>
-                    </p>
-                  </CardContent>
-                </Card>
+            {/* ── Left: Candidates ── */}
+            <div className="flex flex-col items-center justify-center px-8 py-20 lg:px-16 text-center border-b lg:border-b-0 lg:border-r border-border">
+              <div className="mb-10 max-w-md">
+                <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+                  Find Your Next <span className="text-primary">Opportunity</span>
+                </h1>
+                <p className="mt-4 text-lg text-muted-foreground">
+                  {siteConfig.description}
+                </p>
               </div>
-
-              <div className="mt-8 text-center">
+              <Card className="w-full max-w-sm transition-all hover:shadow-lg hover:border-primary/50">
+                <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <UserCircle className="h-8 w-8" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold">I&apos;m a Job Seeker</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Search and apply for jobs from top companies
+                    </p>
+                  </div>
+                  <Link href="/login?role=candidate" className="w-full">
+                    <Button className="mt-2 w-full gap-2 bg-primary/10 text-primary hover:bg-primary/20">
+                      Log in as Candidate <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <p className="text-xs text-muted-foreground">
+                    New here?{" "}
+                    <Link href="/register?role=candidate" className="text-primary underline">
+                      Create an account
+                    </Link>
+                  </p>
+                </CardContent>
+              </Card>
+              <div className="mt-6">
                 <Link href="/browse-jobs">
-                  <Button variant="ghost" size="lg" className="gap-2 text-muted-foreground">
-                    <Search className="h-4 w-4" /> Or browse jobs without signing in
+                  <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+                    <Search className="h-4 w-4" /> Browse jobs without signing in
                   </Button>
                 </Link>
               </div>
-            </>
-          )}
-        </div>
+            </div>
+
+            {/* ── Right: Recruiters ── */}
+            <div className="flex flex-col items-center justify-center px-8 py-20 lg:px-16 text-center bg-primary/5">
+              <div className="mb-10 max-w-md">
+                <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+                  Your next great hire is <span className="text-primary">already out there.</span>
+                </h1>
+                <p className="mt-4 text-lg text-muted-foreground">
+                  Stop searching. Start finding.
+                </p>
+              </div>
+              <Card className="w-full max-w-sm transition-all hover:shadow-lg hover:border-primary/50">
+                <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Building className="h-8 w-8" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold">I&apos;m a Recruiter</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Post jobs and find the perfect candidates
+                    </p>
+                  </div>
+                  <Link href="/login?role=recruiter" className="w-full">
+                    <Button className="mt-2 w-full gap-2">
+                      Log in as Recruiter <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <p className="text-xs text-muted-foreground">
+                    New here?{" "}
+                    <Link href="/register?role=recruiter" className="text-primary underline">
+                      Create an account
+                    </Link>
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+          </div>
+        )}
       </section>
 
 
