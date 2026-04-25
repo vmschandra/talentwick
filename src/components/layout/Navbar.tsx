@@ -116,7 +116,7 @@ export default function Navbar() {
   const messagesPath = isRecruiter ? "/recruiter/messages" : "/candidate/messages";
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-primary text-primary-foreground">
+    <header className="sticky top-0 z-50 w-full text-primary-foreground" style={{ backgroundColor: "#002746" }}>
       <nav className="flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
 
         {/* ── Brand (extreme left) ── */}
@@ -288,7 +288,7 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="border-t border-primary-foreground/20 bg-primary p-4 md:hidden">
+        <div className="border-t border-primary-foreground/20 p-4 md:hidden" style={{ backgroundColor: "#002746" }}>
           <div className="flex flex-col gap-3">
             {(isRecruiter || isCandidate) && (
               <>
