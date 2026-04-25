@@ -70,7 +70,7 @@ export default function HomePage() {
   return (
     <div>
       {/* Hero with Ethereal Beams background */}
-      <section className="relative overflow-hidden bg-black min-h-[90vh]">
+      <section className="relative overflow-hidden min-h-[90vh]" style={{ backgroundColor: "#0a0f2e" }}>
         {/* 3D Beams background */}
         <div className="absolute inset-0 z-0">
           <Beams
