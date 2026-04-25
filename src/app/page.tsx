@@ -222,20 +222,20 @@ export default function HomePage() {
                   {mobileTab === "candidate" ? (
                     <motion.div
                       key="candidate"
-                      initial={{ opacity: 0, y: -20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.22, ease: "easeOut" }}
+                      initial={{ opacity: 0, x: -40 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -40 }}
+                      transition={{ duration: 0.28, ease: "easeOut" }}
                     >
                       {CandidateContent}
                     </motion.div>
                   ) : (
                     <motion.div
                       key="recruiter"
-                      initial={{ opacity: 0, y: -20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.22, ease: "easeOut" }}
+                      initial={{ opacity: 0, x: 40 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 40 }}
+                      transition={{ duration: 0.28, ease: "easeOut" }}
                     >
                       {RecruiterContent}
                     </motion.div>
@@ -245,15 +245,25 @@ export default function HomePage() {
             </div>
 
             {/* ── Desktop layout (lg and above) ── */}
-            <div className="hidden lg:grid lg:grid-cols-2">
-              {/* Left: Candidates */}
-              <div className="flex flex-col items-center px-8 py-16 lg:px-16 text-center border-r border-border">
+            <div className="hidden lg:grid lg:grid-cols-2 overflow-hidden">
+              {/* Left: Candidates — slides in from left */}
+              <motion.div
+                initial={{ opacity: 0, x: -60 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.55, ease: "easeOut" }}
+                className="flex flex-col items-center px-8 py-16 lg:px-16 text-center border-r border-border"
+              >
                 {CandidateContent}
-              </div>
-              {/* Right: Recruiters */}
-              <div className="flex flex-col items-center px-8 py-16 lg:px-16 text-center bg-primary/5">
+              </motion.div>
+              {/* Right: Recruiters — slides in from right */}
+              <motion.div
+                initial={{ opacity: 0, x: 60 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.55, ease: "easeOut" }}
+                className="flex flex-col items-center px-8 py-16 lg:px-16 text-center bg-primary/5"
+              >
                 {RecruiterContent}
-              </div>
+              </motion.div>
             </div>
           </>
         )}
