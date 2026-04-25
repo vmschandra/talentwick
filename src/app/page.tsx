@@ -5,14 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { siteConfig } from "@/config/site";
 import { useAuth } from "@/context/AuthContext";
-import { Briefcase, Users, CreditCard, Search, ArrowRight, Building, TrendingUp, UserCircle, LayoutDashboard } from "lucide-react";
-
-const stats = [
-  { label: "Jobs Posted", value: "10,000+", icon: <Briefcase className="h-5 w-5" /> },
-  { label: "Companies", value: "2,500+", icon: <Building className="h-5 w-5" /> },
-  { label: "Candidates", value: "50,000+", icon: <Users className="h-5 w-5" /> },
-  { label: "Hires Made", value: "8,000+", icon: <TrendingUp className="h-5 w-5" /> },
-];
+import { Users, CreditCard, Search, ArrowRight, Building, UserCircle, LayoutDashboard } from "lucide-react";
 
 const features = [
   {
@@ -159,22 +152,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="border-y bg-muted/40">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
-            {stats.map((s) => (
-              <div key={s.label} className="text-center">
-                <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  {s.icon}
-                </div>
-                <p className="text-2xl font-bold">{s.value}</p>
-                <p className="text-sm text-muted-foreground">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Features */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
