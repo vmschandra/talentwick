@@ -26,9 +26,9 @@ const features = [
 ];
 
 const steps = [
-  { num: "01", title: "Create an Account", desc: "Sign up as a job seeker or recruiter in seconds." },
+  { num: "01", title: "Create an Account", desc: "Sign up as a job seeker in seconds." },
   { num: "02", title: "Complete Your Profile", desc: "Add skills, experience, and resume to stand out." },
-  { num: "03", title: "Apply or Post Jobs", desc: "Seekers apply for free. Recruiters post with credits." },
+  { num: "03", title: "Apply or Post Jobs", desc: "Job seekers apply for free." },
   { num: "04", title: "Get Hired", desc: "Connect with great companies and land your dream job." },
 ];
 
@@ -177,7 +177,7 @@ export default function HomePage() {
       {/* How It Works */}
       <section className="bg-muted/40">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-          <h2 className="text-center text-3xl font-bold">How It Works</h2>
+          <h2 className="text-center text-3xl font-bold">For Candidates</h2>
           <div className="mt-12 grid gap-8 md:grid-cols-4">
             {steps.map((step) => (
               <div key={step.num} className="text-center">
