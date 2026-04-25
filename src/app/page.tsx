@@ -85,7 +85,7 @@ export default function HomePage() {
                   Find Your Next <span className="text-primary">Opportunity</span>
                 </h1>
                 <p className="mt-4 text-lg text-muted-foreground">
-                  {siteConfig.description}
+                  Be Seen. Be Hired. Be Valued.
                 </p>
               </div>
 
@@ -146,7 +146,7 @@ export default function HomePage() {
                   Your next great hire is <span className="text-primary">already out there.</span>
                 </h1>
                 <p className="mt-4 text-lg text-muted-foreground">
-                  Stop searching. Start finding.
+                  Your next great hire is already out there.
                 </p>
               </div>
 
