@@ -9,17 +9,17 @@ import { Users, CreditCard, Search, ArrowRight, Building, UserCircle, LayoutDash
 
 const features = [
   {
-    icon: <Search className="h-8 w-8" />,
+    icon: <Search className="h-6 w-6" />,
     title: "Smart Job Search",
     desc: "Advanced filters by role, location, salary, and work mode to find your perfect match.",
   },
   {
-    icon: <CreditCard className="h-8 w-8" />,
+    icon: <CreditCard className="h-6 w-6" />,
     title: "Pay-Per-Post Credits",
     desc: "Flexible credit-based pricing. Buy only what you need, no subscriptions required.",
   },
   {
-    icon: <Users className="h-8 w-8" />,
+    icon: <Users className="h-6 w-6" />,
     title: "Applicant Tracking",
     desc: "Manage candidates through a visual pipeline from application to offer.",
   },
@@ -76,11 +76,11 @@ export default function HomePage() {
             </div>
           </div>
         ) : (
-          <div className="grid min-h-[85vh] lg:grid-cols-2">
+          <div className="grid lg:grid-cols-2">
 
             {/* ── Left: Candidates ── */}
-            <div className="flex flex-col items-center justify-center px-8 py-20 lg:px-16 text-center border-b lg:border-b-0 lg:border-r border-border">
-              <div className="mb-10 max-w-md">
+            <div className="flex flex-col items-center px-8 py-16 lg:px-16 text-center border-b lg:border-b-0 lg:border-r border-border">
+              <div className="mb-8 max-w-md">
                 <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
                   Find Your Next <span className="text-primary">Opportunity</span>
                 </h1>
@@ -88,6 +88,8 @@ export default function HomePage() {
                   {siteConfig.description}
                 </p>
               </div>
+
+              {/* Candidate login card */}
               <Card className="w-full max-w-sm transition-all hover:shadow-lg hover:border-primary/50">
                 <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -112,18 +114,35 @@ export default function HomePage() {
                   </p>
                 </CardContent>
               </Card>
-              <div className="mt-6">
+
+              <div className="mt-4">
                 <Link href="/browse-jobs">
                   <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
                     <Search className="h-4 w-4" /> Browse jobs without signing in
                   </Button>
                 </Link>
               </div>
+
+              {/* For Candidates steps */}
+              <div className="mt-12 w-full max-w-sm text-left">
+                <h2 className="text-lg font-semibold text-center mb-6">For Candidates</h2>
+                <div className="flex flex-col gap-5">
+                  {steps.map((step) => (
+                    <div key={step.num} className="flex items-start gap-4">
+                      <span className="text-2xl font-bold text-primary/30 w-8 shrink-0">{step.num}</span>
+                      <div>
+                        <p className="font-semibold text-sm">{step.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{step.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* ── Right: Recruiters ── */}
-            <div className="flex flex-col items-center justify-center px-8 py-20 lg:px-16 text-center bg-primary/5">
-              <div className="mb-10 max-w-md">
+            <div className="flex flex-col items-center px-8 py-16 lg:px-16 text-center bg-primary/5">
+              <div className="mb-8 max-w-md">
                 <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
                   Your next great hire is <span className="text-primary">already out there.</span>
                 </h1>
@@ -131,6 +150,8 @@ export default function HomePage() {
                   Stop searching. Start finding.
                 </p>
               </div>
+
+              {/* Recruiter login card */}
               <Card className="w-full max-w-sm transition-all hover:shadow-lg hover:border-primary/50">
                 <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -155,49 +176,29 @@ export default function HomePage() {
                   </p>
                 </CardContent>
               </Card>
+
+              {/* For Recruiters features */}
+              <div className="mt-12 w-full max-w-sm text-left">
+                <h2 className="text-lg font-semibold text-center mb-6">For Recruiters</h2>
+                <div className="flex flex-col gap-5">
+                  {features.map((f) => (
+                    <div key={f.title} className="flex items-start gap-4">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        {f.icon}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-sm">{f.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{f.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
           </div>
         )}
       </section>
-
-
-      {/* Features */}
-      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold">For Recruiters</h2>
-        </div>
-        <div className="mt-12 grid gap-8 md:grid-cols-3">
-          {features.map((f) => (
-            <Card key={f.title} className="text-center">
-              <CardContent className="pt-8 pb-6">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  {f.icon}
-                </div>
-                <h3 className="text-lg font-semibold">{f.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{f.desc}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="bg-muted/40">
-        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-          <h2 className="text-center text-3xl font-bold">For Candidates</h2>
-          <div className="mt-12 grid gap-8 md:grid-cols-4">
-            {steps.map((step) => (
-              <div key={step.num} className="text-center">
-                <span className="text-4xl font-bold text-primary/20">{step.num}</span>
-                <h3 className="mt-2 font-semibold">{step.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{step.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
     </div>
   );
 }
