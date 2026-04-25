@@ -134,12 +134,6 @@ export default function Navbar() {
           {/* Logged-out */}
           {!loading && (!user || !userDoc) && (
             <div className="flex items-center gap-3">
-              <Link
-                href="/browse-jobs"
-                className="text-sm font-medium text-primary-foreground/80 hover:text-primary-foreground transition-colors"
-              >
-                Browse Jobs
-              </Link>
               <Link href="/login?role=candidate">
                 <Button
                   size="sm"
@@ -298,7 +292,6 @@ export default function Navbar() {
             )}
             {!loading && (!user || !userDoc) ? (
               <>
-                <Link href="/browse-jobs" className="text-sm font-medium text-primary-foreground" onClick={() => setMobileOpen(false)}>Browse Jobs</Link>
                 <Link href="/login?role=candidate" onClick={() => setMobileOpen(false)}>
                   <Button className="w-full bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25 border-0">
                     Candidate Login
