@@ -6,6 +6,12 @@ export function middleware(request: NextRequest) {
 
   const firebaseConfigured = !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 
+  // Secret admin entry — path stored in env var, never in the repo
+  const adminSecret = process.env.ADMIN_SECRET_PATH;
+  if (adminSecret && pathname === `/${adminSecret}`) {
+    return NextResponse.redirect(new URL("/login?role=admin", request.url));
+  }
+
   // Setup page is only accessible when Firebase isn't configured
   if (pathname === "/setup") {
     if (!firebaseConfigured) return NextResponse.next();
