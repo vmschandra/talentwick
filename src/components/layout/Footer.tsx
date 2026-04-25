@@ -6,17 +6,12 @@ export default function Footer() {
   return (
     <footer className="border-t bg-muted/40">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="flex justify-center">
-          <div>
-            <h4 className="text-sm font-semibold">Company</h4>
-            <ul className="mt-3 space-y-2">
-              <li><Link href="/about" className="text-sm text-muted-foreground hover:text-foreground">About</Link></li>
-              <li><Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground">Privacy</Link></li>
-              <li><Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground">Terms</Link></li>
-              <li><Link href="/refund" className="text-sm text-muted-foreground hover:text-foreground">Refund Policy</Link></li>
-              <li><Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground">Contact Us</Link></li>
-            </ul>
-          </div>
+        <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
+          <Link href="/about" className="text-sm text-muted-foreground hover:text-foreground">About</Link>
+          <Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground">Privacy</Link>
+          <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground">Terms</Link>
+          <Link href="/refund" className="text-sm text-muted-foreground hover:text-foreground">Refund Policy</Link>
+          <Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground">Contact Us</Link>
         </div>
         <div className="mt-10 border-t pt-6 flex flex-col items-center gap-3">
           <Link
