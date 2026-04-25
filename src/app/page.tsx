@@ -115,17 +115,8 @@ export default function HomePage() {
                 </CardContent>
               </Card>
 
-              <div className="mt-4">
-                <Link href="/browse-jobs">
-                  <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
-                    <Search className="h-4 w-4" /> Browse jobs without signing in
-                  </Button>
-                </Link>
-              </div>
-
               {/* For Candidates steps */}
               <div className="mt-12 w-full max-w-sm text-left">
-                <h2 className="text-lg font-semibold text-center mb-6">For Candidates</h2>
                 <div className="flex flex-col gap-5">
                   {steps.map((step) => (
                     <div key={step.num} className="flex items-start gap-4">
@@ -137,6 +128,14 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              <div className="mt-8">
+                <Link href="/browse-jobs">
+                  <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+                    <Search className="h-4 w-4" /> Browse jobs without signing in
+                  </Button>
+                </Link>
               </div>
             </div>
 
@@ -177,9 +176,8 @@ export default function HomePage() {
                 </CardContent>
               </Card>
 
-              {/* For Recruiters features */}
+              {/* Recruiter features */}
               <div className="mt-12 w-full max-w-sm text-left">
-                <h2 className="text-lg font-semibold text-center mb-6">For Recruiters</h2>
                 <div className="flex flex-col gap-5">
                   {features.map((f) => (
                     <div key={f.title} className="flex items-start gap-4">
