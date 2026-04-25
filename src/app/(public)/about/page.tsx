@@ -9,7 +9,6 @@ import {
   ShieldCheck,
   Zap,
   Globe,
-  TrendingUp,
   Building,
   ArrowRight,
   CheckCircle2,
@@ -40,12 +39,6 @@ const values = [
   },
 ];
 
-const stats = [
-  { value: "50,000+", label: "Registered Candidates", icon: Users },
-  { value: "2,500+", label: "Hiring Companies", icon: Building },
-  { value: "10,000+", label: "Jobs Posted", icon: Briefcase },
-  { value: "8,000+", label: "Successful Hires", icon: TrendingUp },
-];
 
 const forCandidates = [
   "Create a rich profile with skills, experience, and a downloadable resume",
@@ -98,22 +91,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="border-y bg-muted/40">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
-            {stats.map(({ value, label, icon: Icon }) => (
-              <div key={label} className="text-center">
-                <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <p className="text-2xl font-bold">{value}</p>
-                <p className="text-sm text-muted-foreground">{label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Mission */}
       <section className="mx-auto max-w-4xl px-4 py-20 sm:px-6 lg:px-8">
