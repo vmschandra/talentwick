@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { logout } from "@/lib/firebase/auth";
@@ -64,6 +64,8 @@ function NavIconButton({
 export default function Navbar() {
   const { user, userDoc, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const isHomePage = pathname === "/";
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
@@ -132,7 +134,7 @@ export default function Navbar() {
         <div className="hidden md:flex items-center">
 
           {/* Logged-out */}
-          {!loading && (!user || !userDoc) && (
+          {!loading && (!user || !userDoc) && !isHomePage && (
             <div className="flex items-center gap-3">
               <Link href="/login?role=candidate">
                 <Button
@@ -290,7 +292,7 @@ export default function Navbar() {
                 <Link href={messagesPath} className="text-sm font-medium text-primary-foreground" onClick={() => setMobileOpen(false)}>Messages</Link>
               </>
             )}
-            {!loading && (!user || !userDoc) ? (
+            {!loading && (!user || !userDoc) && !isHomePage ? (
               <>
                 <Link href="/login?role=candidate" onClick={() => setMobileOpen(false)}>
                   <Button className="w-full bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25 border-0">
