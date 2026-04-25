@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "Contact Us" };
 
-const SUPPORT_EMAIL = "talentwick@gmail.com";
+const SUPPORT_EMAIL = "support@talentwick.com";
 
 const topics = [
   {
