@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { siteConfig } from "@/config/site";
@@ -35,6 +37,7 @@ const steps = [
 export default function HomePage() {
   const { user, userDoc, loading } = useAuth();
   const isLoggedIn = !loading && !!user;
+  const [mobileTab, setMobileTab] = useState<"candidate" | "recruiter">("candidate");
 
   const dashboardPath =
     userDoc?.role === "recruiter"
@@ -43,9 +46,117 @@ export default function HomePage() {
       ? "/admin/dashboard"
       : "/candidate/dashboard";
 
+  const CandidateContent = (
+    <div className="flex flex-col items-center text-center">
+      <div className="mb-8 max-w-md">
+        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+          Find Your Next <span className="text-primary">Opportunity</span>
+        </h1>
+        <p className="mt-4 text-lg text-muted-foreground">
+          Be Seen. Be Hired. Be Valued.
+        </p>
+      </div>
+      <Card className="w-full max-w-sm transition-all hover:shadow-lg hover:border-primary/50">
+        <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <UserCircle className="h-8 w-8" />
+          </div>
+          <div>
+            <h3 className="text-xl font-semibold">I&apos;m a Job Seeker</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Search and apply for jobs from top companies
+            </p>
+          </div>
+          <Link href="/login?role=candidate" className="w-full">
+            <Button className="mt-2 w-full gap-2 bg-primary/10 text-primary hover:bg-primary/20">
+              Log in as Candidate <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+          <p className="text-xs text-muted-foreground">
+            New here?{" "}
+            <Link href="/register?role=candidate" className="text-primary underline">
+              Create an account
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
+      <div className="mt-12 w-full max-w-sm text-left">
+        <div className="flex flex-col gap-5">
+          {steps.map((step) => (
+            <div key={step.num} className="flex items-start gap-4">
+              <span className="text-2xl font-bold text-primary/30 w-8 shrink-0">{step.num}</span>
+              <div>
+                <p className="font-semibold text-sm">{step.title}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{step.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="mt-8">
+        <Link href="/browse-jobs">
+          <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+            <Search className="h-4 w-4" /> Browse jobs without signing in
+          </Button>
+        </Link>
+      </div>
+    </div>
+  );
+
+  const RecruiterContent = (
+    <div className="flex flex-col items-center text-center">
+      <div className="mb-8 max-w-md">
+        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+          Your next great hire is <span className="text-primary">already out there.</span>
+        </h1>
+        <p className="mt-4 text-lg text-muted-foreground">
+          Your next great hire is already out there.
+        </p>
+      </div>
+      <Card className="w-full max-w-sm transition-all hover:shadow-lg hover:border-primary/50">
+        <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Building className="h-8 w-8" />
+          </div>
+          <div>
+            <h3 className="text-xl font-semibold">I&apos;m a Recruiter</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Post jobs and find the perfect candidates
+            </p>
+          </div>
+          <Link href="/login?role=recruiter" className="w-full">
+            <Button className="mt-2 w-full gap-2">
+              Log in as Recruiter <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+          <p className="text-xs text-muted-foreground">
+            New here?{" "}
+            <Link href="/register?role=recruiter" className="text-primary underline">
+              Create an account
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
+      <div className="mt-12 w-full max-w-sm text-left">
+        <div className="flex flex-col gap-5">
+          {features.map((f) => (
+            <div key={f.title} className="flex items-start gap-4">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                {f.icon}
+              </div>
+              <div>
+                <p className="font-semibold text-sm">{f.title}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{f.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div>
-      {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5">
         {isLoggedIn ? (
           <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
@@ -76,125 +187,75 @@ export default function HomePage() {
             </div>
           </div>
         ) : (
-          <div className="grid lg:grid-cols-2">
-
-            {/* ── Left: Candidates ── */}
-            <div className="flex flex-col items-center px-8 py-16 lg:px-16 text-center border-b lg:border-b-0 lg:border-r border-border">
-              <div className="mb-8 max-w-md">
-                <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-                  Find Your Next <span className="text-primary">Opportunity</span>
-                </h1>
-                <p className="mt-4 text-lg text-muted-foreground">
-                  Be Seen. Be Hired. Be Valued.
-                </p>
-              </div>
-
-              {/* Candidate login card */}
-              <Card className="w-full max-w-sm transition-all hover:shadow-lg hover:border-primary/50">
-                <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <UserCircle className="h-8 w-8" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold">I&apos;m a Job Seeker</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Search and apply for jobs from top companies
-                    </p>
-                  </div>
-                  <Link href="/login?role=candidate" className="w-full">
-                    <Button className="mt-2 w-full gap-2 bg-primary/10 text-primary hover:bg-primary/20">
-                      Log in as Candidate <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                  <p className="text-xs text-muted-foreground">
-                    New here?{" "}
-                    <Link href="/register?role=candidate" className="text-primary underline">
-                      Create an account
-                    </Link>
-                  </p>
-                </CardContent>
-              </Card>
-
-              {/* For Candidates steps */}
-              <div className="mt-12 w-full max-w-sm text-left">
-                <div className="flex flex-col gap-5">
-                  {steps.map((step) => (
-                    <div key={step.num} className="flex items-start gap-4">
-                      <span className="text-2xl font-bold text-primary/30 w-8 shrink-0">{step.num}</span>
-                      <div>
-                        <p className="font-semibold text-sm">{step.title}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{step.desc}</p>
-                      </div>
-                    </div>
-                  ))}
+          <>
+            {/* ── Mobile layout (below lg) ── */}
+            <div className="lg:hidden">
+              {/* Sticky tab switcher */}
+              <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-4 py-3">
+                <div className="flex rounded-xl bg-muted p-1 gap-1">
+                  <button
+                    onClick={() => setMobileTab("candidate")}
+                    className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all duration-200 ${
+                      mobileTab === "candidate"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Job Seeker
+                  </button>
+                  <button
+                    onClick={() => setMobileTab("recruiter")}
+                    className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all duration-200 ${
+                      mobileTab === "recruiter"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Recruiter
+                  </button>
                 </div>
               </div>
 
-              <div className="mt-8">
-                <Link href="/browse-jobs">
-                  <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
-                    <Search className="h-4 w-4" /> Browse jobs without signing in
-                  </Button>
-                </Link>
+              {/* Animated content */}
+              <div className="px-6 py-10 overflow-hidden">
+                <AnimatePresence mode="wait">
+                  {mobileTab === "candidate" ? (
+                    <motion.div
+                      key="candidate"
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.22, ease: "easeOut" }}
+                    >
+                      {CandidateContent}
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="recruiter"
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.22, ease: "easeOut" }}
+                    >
+                      {RecruiterContent}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
-            {/* ── Right: Recruiters ── */}
-            <div className="flex flex-col items-center px-8 py-16 lg:px-16 text-center bg-primary/5">
-              <div className="mb-8 max-w-md">
-                <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-                  Your next great hire is <span className="text-primary">already out there.</span>
-                </h1>
-                <p className="mt-4 text-lg text-muted-foreground">
-                  Your next great hire is already out there.
-                </p>
+            {/* ── Desktop layout (lg and above) ── */}
+            <div className="hidden lg:grid lg:grid-cols-2">
+              {/* Left: Candidates */}
+              <div className="flex flex-col items-center px-8 py-16 lg:px-16 text-center border-r border-border">
+                {CandidateContent}
               </div>
-
-              {/* Recruiter login card */}
-              <Card className="w-full max-w-sm transition-all hover:shadow-lg hover:border-primary/50">
-                <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <Building className="h-8 w-8" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold">I&apos;m a Recruiter</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Post jobs and find the perfect candidates
-                    </p>
-                  </div>
-                  <Link href="/login?role=recruiter" className="w-full">
-                    <Button className="mt-2 w-full gap-2">
-                      Log in as Recruiter <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                  <p className="text-xs text-muted-foreground">
-                    New here?{" "}
-                    <Link href="/register?role=recruiter" className="text-primary underline">
-                      Create an account
-                    </Link>
-                  </p>
-                </CardContent>
-              </Card>
-
-              {/* Recruiter features */}
-              <div className="mt-12 w-full max-w-sm text-left">
-                <div className="flex flex-col gap-5">
-                  {features.map((f) => (
-                    <div key={f.title} className="flex items-start gap-4">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        {f.icon}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-sm">{f.title}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{f.desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              {/* Right: Recruiters */}
+              <div className="flex flex-col items-center px-8 py-16 lg:px-16 text-center bg-primary/5">
+                {RecruiterContent}
               </div>
             </div>
-
-          </div>
+          </>
         )}
       </section>
     </div>
