@@ -4,7 +4,7 @@ export const siteConfig = {
   url: process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
     : "http://localhost:3000",
-  adminEmail: "admin@talentwick.com",
+  adminEmail: "talentwick@gmail.com",
   maxResumeSize: 5 * 1024 * 1024,   // 5MB
   maxImageSize: 2 * 1024 * 1024,     // 2MB
   jobExpiryDays: 30,
