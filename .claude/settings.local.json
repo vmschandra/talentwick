@@ -61,10 +61,23 @@
       "Bash(mkdir -p ~/.claude/skills)",
       "Bash(mv ~/.claude/.claude/skills/ui-ux-pro-max ~/.claude/skills/ui-ux-pro-max)",
       "Bash(grep -E \"package\\\\.json$\")",
-      "Bash(rm -rf \"/Users/vamshi/Desktop/Desk/Projects/JOB PORTAL/src/app/api/debug-admin-doc\")"
+      "Bash(rm -rf \"/Users/vamshi/Desktop/Desk/Projects/JOB PORTAL/src/app/api/debug-admin-doc\")",
+      "Bash(grep -v \"^$\\\\|node_modules\\\\|\\\\.next\")",
+      "Bash(grep -v \"node_modules\\\\|\\\\.next\\\\|^$\")",
+      "Bash(python3 /Users/vamshi/.claude/skills/ui-ux-pro-max/scripts/search.py \"job portal recruitment SaaS professional hiring talent\" --design-system -p \"TalentWick\")",
+      "Bash(python3 /Users/vamshi/.claude/skills/ui-ux-pro-max/scripts/search.py \"job portal recruitment dashboard\" --domain ux -n 8)",
+      "Bash(python3 /Users/vamshi/.claude/skills/ui-ux-pro-max/scripts/search.py \"accessibility animation loading\" --domain ux -n 8)",
+      "Bash(python3 /Users/vamshi/.claude/skills/ui-ux-pro-max/scripts/search.py \"saas professional\" --domain color -n 5)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(npm view *)",
+      "Bash(node -e \"const v=require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\); const arr=JSON.parse\\(v\\); console.log\\(arr.filter\\(x=>x.startsWith\\('9.'\\)\\).slice\\(-5\\).join\\('\\\\n'\\)\\)\")",
+      "Bash(openssl rand *)"
     ],
     "additionalDirectories": [
-      "/Users/vamshi/Desktop/Desk/Projects/JOB PORTAL/src/app/recruiter/checkout"
+      "/Users/vamshi/Desktop/Desk/Projects/JOB PORTAL/src/app/recruiter/checkout",
+      "/Users/vamshi/Desktop/Desk/Projects/JOB PORTAL"
     ]
   }
 }
