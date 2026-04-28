@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getAllJobs, updateJob, deleteJob } from "@/lib/firebase/firestore";
 import { Job, JobStatus } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Search, Trash2, Pause, Play, Eye } from "lucide-react";
+import { Search, Trash2, Pause, Play, Eye, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 
@@ -32,16 +32,24 @@ const statusVariant: Record<JobStatus, "default" | "success" | "warning" | "seco
 export default function AdminJobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [tab, setTab] = useState("all");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true);
+    setError(null);
     getAllJobs()
       .then(setJobs)
-      .catch(() => toast.error("Failed to load jobs"))
+      .catch((err) => {
+        console.error("Failed to load jobs:", err);
+        setError("Failed to load jobs. Please try again.");
+      })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const handleStatusChange = async (jobId: string, status: JobStatus) => {
     try {
@@ -77,6 +85,24 @@ export default function AdminJobsPage() {
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Job Management</h1>
         <div className="space-y-3">{[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-20" />)}</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">Job Management</h1>
+        <Card>
+          <CardContent className="flex flex-col items-center gap-4 py-16 text-center">
+            <AlertCircle className="h-10 w-10 text-destructive" />
+            <div>
+              <p className="font-semibold">Something went wrong</p>
+              <p className="mt-1 text-sm text-muted-foreground">{error}</p>
+            </div>
+            <Button variant="outline" onClick={load}>Try again</Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
