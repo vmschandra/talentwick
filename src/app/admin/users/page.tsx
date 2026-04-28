@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getAllUsers } from "@/lib/firebase/firestore";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, UserX, UserCheck } from "lucide-react";
+import { Search, UserX, UserCheck, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 
@@ -20,15 +20,20 @@ export default function AdminUsersPage() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserDoc[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [tab, setTab] = useState("all");
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true);
+    setError(null);
     getAllUsers()
       .then((data) => setUsers(data as UserDoc[]))
-      .catch(() => toast.error("Failed to load users"))
+      .catch(() => setError("Failed to load users. Please try again."))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const toggleActive = async (uid: string, currentActive: boolean): Promise<void> => {
     if (uid === currentUser?.uid) {
@@ -58,6 +63,24 @@ export default function AdminUsersPage() {
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">User Management</h1>
         <div className="space-y-3">{[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-16" />)}</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">User Management</h1>
+        <Card>
+          <CardContent className="flex flex-col items-center gap-4 py-16 text-center">
+            <AlertCircle className="h-10 w-10 text-destructive" />
+            <div>
+              <p className="font-semibold">Something went wrong</p>
+              <p className="mt-1 text-sm text-muted-foreground">{error}</p>
+            </div>
+            <Button variant="outline" onClick={load}>Try again</Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
