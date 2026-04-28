@@ -29,7 +29,10 @@ export default function AdminUsersPage() {
     setError(null);
     getAllUsers()
       .then((data) => setUsers(data as UserDoc[]))
-      .catch(() => setError("Failed to load users. Please try again."))
+      .catch((err) => {
+        console.error("Failed to load users:", err);
+        setError("Failed to load users. Please try again.");
+      })
       .finally(() => setLoading(false));
   }, []);
 
