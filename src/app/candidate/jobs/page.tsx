@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useJobSearch } from "@/hooks/useJobs";
@@ -65,6 +65,7 @@ function JobsContent() {
   const [experienceLevel, setExperienceLevel] = useState<string>(searchParams.get("level") || "");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
+  const initialized = useRef(false);
 
   const location = locationCity
     ? `${locationCity}, ${locationCountry}`
@@ -99,7 +100,8 @@ function JobsContent() {
 
   // Initial load from URL params
   useEffect(() => {
-    if (authLoading || !user) return;
+    if (authLoading || !user || initialized.current) return;
+    initialized.current = true;
     search(buildFilters(), true).then(() => setInitialLoad(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading]);
@@ -129,7 +131,7 @@ function JobsContent() {
   }
 
   const hasActiveFilters =
-    keyword.trim() || locationCountry || jobType || workMode || experienceLevel;
+    keyword.trim() || location.trim() || jobType || workMode || experienceLevel;
 
   if (authLoading) return <PageSkeleton />;
 
