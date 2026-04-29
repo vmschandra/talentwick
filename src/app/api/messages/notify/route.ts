@@ -3,6 +3,7 @@ import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { sendEmail } from "@/lib/email";
 import { newMessageEmail } from "@/lib/email/templates";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,14 @@ export async function POST(request: Request) {
     const token = authHeader.slice(7);
     const decoded = await getAdminAuth().verifyIdToken(token);
     const callerId = decoded.uid;
+
+    const rl = await checkRateLimit(`messages-notify:${callerId}`, 30, 60);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429, headers: { "Retry-After": String(rl.retryAfter ?? 60) } }
+      );
+    }
 
     const { conversationId, recipientId, recipientRole, senderName, previewText } =
       await request.json();
