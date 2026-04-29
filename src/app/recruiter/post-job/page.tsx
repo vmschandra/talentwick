@@ -192,11 +192,17 @@ export default function PostJobPage() {
     setValue("skills", updated.join(","), { shouldValidate: true });
   }
 
+  function hasValidCredits(p: RecruiterProfile | null): boolean {
+    if (!p || p.jobPostCredits < 1) return false;
+    if (!p.creditsExpiresAt) return true;
+    return p.creditsExpiresAt.toDate() > new Date();
+  }
+
   async function onSubmit(data: JobFormData) {
     if (!user || !profile) return;
 
-    if ((profile.jobPostCredits || 0) < 1) {
-      toast.error("No credits remaining. Please purchase credits first.");
+    if (!hasValidCredits(profile)) {
+      toast.error("Your credits have expired or are unavailable. Please purchase credits first.");
       return;
     }
 
@@ -265,9 +271,7 @@ export default function PostJobPage() {
     return <PostJobSkeleton />;
   }
 
-  const credits = profile?.jobPostCredits ?? 0;
-
-  if (credits < 1) {
+  if (!hasValidCredits(profile)) {
     return (
       <div className="mx-auto max-w-2xl">
         <Card>
@@ -277,7 +281,7 @@ export default function PostJobPage() {
             </div>
             <h2 className="text-2xl font-bold">No Credits Available</h2>
             <p className="max-w-md text-muted-foreground">
-              You need at least 1 job posting credit to post a new job. Purchase credits to continue.
+              Your credits have expired or run out. Purchase a new plan to continue posting jobs.
             </p>
             <Button asChild size="lg">
               <Link href="/recruiter/pricing">
@@ -301,7 +305,7 @@ export default function PostJobPage() {
         </div>
         <Badge variant="outline" className="h-8 px-3 text-sm">
           <CreditCard className="mr-1.5 h-3.5 w-3.5" />
-          {credits} credit{credits !== 1 ? "s" : ""} remaining
+          {profile?.jobPostCredits ?? 0} credit{(profile?.jobPostCredits ?? 0) !== 1 ? "s" : ""} remaining
         </Badge>
       </div>
 
