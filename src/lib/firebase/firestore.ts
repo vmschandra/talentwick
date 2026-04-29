@@ -226,8 +226,11 @@ export async function postJobWithCredit(
 
   await runTransaction(db, async (transaction) => {
     const recruiterSnap = await transaction.get(recruiterRef);
-    const credits = recruiterSnap.data()?.jobPostCredits || 0;
-    if (credits < 1) throw new Error("No credits remaining");
+    const data = recruiterSnap.data();
+    const credits = data?.jobPostCredits || 0;
+    const expiresAt = data?.creditsExpiresAt;
+    const creditsExpired = expiresAt && expiresAt.toDate() <= new Date();
+    if (credits < 1 || creditsExpired) throw new Error("No valid credits");
 
     transaction.update(recruiterRef, {
       jobPostCredits: increment(-1),
