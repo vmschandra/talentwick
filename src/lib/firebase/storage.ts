@@ -19,7 +19,7 @@ export async function uploadFile(path: string, file: File): Promise<string> {
 
 export async function uploadResume(uid: string, file: File): Promise<string> {
   validateFile(file, siteConfig.allowedResumeTypes, siteConfig.maxResumeSize, "Resume");
-  return uploadFile(`resumes/${uid}/${file.name}`, file);
+  return uploadFile(`resumes/${uid}/resume.pdf`, file);
 }
 
 export async function uploadAvatar(uid: string, file: File): Promise<string> {
