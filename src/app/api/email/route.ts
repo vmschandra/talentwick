@@ -10,6 +10,7 @@ import {
   newMessageEmail,
   creditsAddedEmail,
 } from "@/lib/email/templates";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -19,10 +20,19 @@ export async function POST(request: Request) {
   if (!authHeader?.startsWith("Bearer ")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  let decoded: { uid: string };
   try {
-    await getAdminAuth().verifyIdToken(authHeader.slice(7));
+    decoded = await getAdminAuth().verifyIdToken(authHeader.slice(7));
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rl = await checkRateLimit(`email:${decoded.uid}`, 30, 60);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter ?? 60) } }
+    );
   }
 
   const body = await request.json();
